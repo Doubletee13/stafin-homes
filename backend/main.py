@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 
+from app.api.router import router
+
 app = FastAPI(title="Stafin Homes API")
 
-
-@app.get("/health")
-def health_check():
-    return {"status": "ok"}
+app.include_router(router)
