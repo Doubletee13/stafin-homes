@@ -86,7 +86,7 @@ async function getProperties() {
  * Fetch a single property by ID
  * @param {number} id - Property ID
  * @returns {Promise<Object>} Property object
- * @throws {Error} If network request fails or property not found
+ * @throws {Error} Structured error with type property
  */
 async function getPropertyById(id) {
     const url = `${API_BASE_URL}/properties/${id}/`;
@@ -101,28 +101,51 @@ async function getPropertyById(id) {
 
         if (!response.ok) {
             if (response.status === 404) {
-                throw new Error('Property not found');
+                const error = new Error('Property not found');
+                error.type = 'NOT_FOUND';
+                error.statusCode = 404;
+                throw error;
             }
-            throw new Error(`API request failed with status ${response.status}`);
+            const error = new Error(`API request failed with status ${response.status}`);
+            error.type = 'API_ERROR';
+            error.statusCode = response.status;
+            throw error;
         }
 
         const data = await response.json();
         
         if (!data) {
-            throw new Error('Invalid response from server');
+            const error = new Error('Invalid response from server');
+            error.type = 'INVALID_RESPONSE';
+            throw error;
         }
 
         return data;
     } catch (error) {
+        if (error.type) {
+            // Already a structured error, re-throw
+            throw error;
+        }
+        
         if (error instanceof SyntaxError) {
             console.error('Invalid JSON response from API:', error);
-            throw new Error('Invalid response from server');
+            const structuredError = new Error('Invalid response from server');
+            structuredError.type = 'INVALID_RESPONSE';
+            throw structuredError;
+        } else if (error.name === 'AbortError') {
+            const structuredError = new Error('Request timed out');
+            structuredError.type = 'TIMEOUT';
+            throw structuredError;
         } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
             console.error('Network error:', error);
-            throw new Error('Unable to connect to server. Please check your network connection.');
+            const structuredError = new Error('Unable to connect to server');
+            structuredError.type = 'NETWORK_ERROR';
+            throw structuredError;
         } else {
             console.error('API error:', error);
-            throw error;
+            const structuredError = new Error(error.message || 'An unexpected error occurred');
+            structuredError.type = 'UNKNOWN';
+            throw structuredError;
         }
     }
 }
