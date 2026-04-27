@@ -6,8 +6,8 @@ from alembic import context
 
 # Import Base and all models so Alembic can autogenerate migrations
 from app.models.base import Base  # noqa: F401
-# Import all models here as they are created, e.g.:
-# from app.models.property import Property  # noqa: F401
+# Import all models here as they are created:
+from app.models.property import Property  # noqa: F401
 
 # Alembic Config object
 config = context.config
