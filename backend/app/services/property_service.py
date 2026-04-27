@@ -13,8 +13,28 @@ def create_property(db: Session, data: PropertyCreate) -> Property:
     return db_property
 
 
-def get_all_properties(db: Session) -> list[Property]:
-    return db.query(Property).all()
+def get_all_properties(
+    db: Session,
+    location: str = None,
+    property_type: str = None,
+    min_price: float = None,
+    max_price: float = None,
+    bedrooms: int = None,
+) -> list[Property]:
+    query = db.query(Property)
+
+    if location:
+        query = query.filter(Property.location.ilike(f"%{location}%"))
+    if property_type:
+        query = query.filter(Property.property_type == property_type)
+    if min_price is not None:
+        query = query.filter(Property.price >= min_price)
+    if max_price is not None:
+        query = query.filter(Property.price <= max_price)
+    if bedrooms is not None:
+        query = query.filter(Property.bedrooms == bedrooms)
+
+    return query.all()
 
 
 def get_property_by_id(db: Session, property_id: int) -> Property:
