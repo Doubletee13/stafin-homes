@@ -40,15 +40,28 @@ async function fetchWithTimeout(url, options = {}) {
 }
 
 /**
- * Fetch all properties from the API
+ * Fetch all properties from the API with optional filters
+ * @param {Object} filters - Filter parameters
+ * @param {string} filters.location - Location filter
+ * @param {string} filters.property_type - Property type filter (sale, rent, shortlet)
+ * @param {number} filters.min_price - Minimum price filter
+ * @param {number} filters.max_price - Maximum price filter
+ * @param {number} filters.bedrooms - Bedrooms filter
  * @returns {Promise<Array>} Array of property objects
- * @throws {Error} If network request fails or response is invalid
+ * @throws {Error} Structured error with type property
  */
-async function getProperties() {
-    const url = `${API_BASE_URL}/properties/`;
+async function getProperties(filters = {}) {
+    const url = new URL(`${API_BASE_URL}/properties/`);
+    
+    // Add query parameters for filters
+    if (filters.location) url.searchParams.append('location', filters.location);
+    if (filters.property_type) url.searchParams.append('property_type', filters.property_type);
+    if (filters.min_price) url.searchParams.append('min_price', filters.min_price);
+    if (filters.max_price) url.searchParams.append('max_price', filters.max_price);
+    if (filters.bedrooms) url.searchParams.append('bedrooms', filters.bedrooms);
     
     try {
-        const response = await fetchWithTimeout(url, {
+        const response = await fetchWithTimeout(url.toString(), {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -56,7 +69,10 @@ async function getProperties() {
         });
 
         if (!response.ok) {
-            throw new Error(`API request failed with status ${response.status}`);
+            const error = new Error(`API request failed with status ${response.status}`);
+            error.type = 'API_ERROR';
+            error.statusCode = response.status;
+            throw error;
         }
 
         const data = await response.json();
@@ -69,15 +85,30 @@ async function getProperties() {
 
         return data;
     } catch (error) {
+        if (error.type) {
+            // Already a structured error, re-throw
+            throw error;
+        }
+        
         if (error instanceof SyntaxError) {
             console.error('Invalid JSON response from API:', error);
-            throw new Error('Invalid response from server');
+            const structuredError = new Error('Invalid response from server');
+            structuredError.type = 'INVALID_RESPONSE';
+            throw structuredError;
+        } else if (error.name === 'AbortError') {
+            const structuredError = new Error('Request timed out');
+            structuredError.type = 'TIMEOUT';
+            throw structuredError;
         } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
             console.error('Network error:', error);
-            throw new Error('Unable to connect to server. Please check your network connection.');
+            const structuredError = new Error('Unable to connect to server');
+            structuredError.type = 'NETWORK_ERROR';
+            throw structuredError;
         } else {
             console.error('API error:', error);
-            throw error;
+            const structuredError = new Error(error.message || 'An unexpected error occurred');
+            structuredError.type = 'UNKNOWN';
+            throw structuredError;
         }
     }
 }
