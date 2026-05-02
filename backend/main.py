@@ -3,6 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 
 from app.api.router import router
+from app.core.config import validate_security_config
+
+# Validate security configuration on startup
+validate_security_config()
 
 app = FastAPI(title="Stafin Homes API")
 
