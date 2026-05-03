@@ -181,7 +181,246 @@ async function getPropertyById(id) {
     }
 }
 
+/**
+ * Create a new property (requires authentication)
+ * @param {Object} propertyData - Property data to create
+ * @param {string} propertyData.title - Property title
+ * @param {string} propertyData.description - Property description
+ * @param {number} propertyData.price - Property price
+ * @param {string} propertyData.location - Property location
+ * @param {string} propertyData.property_type - Property type (sale, rent, shortlet)
+ * @param {number} propertyData.bedrooms - Number of bedrooms
+ * @param {number} propertyData.bathrooms - Number of bathrooms
+ * @param {Array<string>} propertyData.image_urls - Array of image URLs
+ * @returns {Promise<Object>} Created property object
+ * @throws {Error} Structured error with type property
+ */
+async function createProperty(propertyData) {
+    const token = localStorage.getItem('stafin_admin_token');
+    
+    if (!token) {
+        const error = new Error('Not authenticated');
+        error.type = 'AUTH_ERROR';
+        throw error;
+    }
+
+    const url = `${API_BASE_URL}/properties/`;
+    
+    try {
+        const response = await fetchWithTimeout(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(propertyData),
+        });
+
+        if (response.status === 401) {
+            localStorage.removeItem('stafin_admin_token');
+            window.location.href = '/admin-login.html';
+            const error = new Error('Session expired');
+            error.type = 'AUTH_ERROR';
+            throw error;
+        }
+
+        if (!response.ok) {
+            const error = new Error(`API request failed with status ${response.status}`);
+            error.type = 'API_ERROR';
+            error.statusCode = response.status;
+            throw error;
+        }
+
+        const data = await response.json();
+        
+        if (!data) {
+            const error = new Error('Invalid response from server');
+            error.type = 'INVALID_RESPONSE';
+            throw error;
+        }
+
+        return data;
+    } catch (error) {
+        if (error.type) {
+            throw error;
+        }
+        
+        if (error instanceof SyntaxError) {
+            console.error('Invalid JSON response from API:', error);
+            const structuredError = new Error('Invalid response from server');
+            structuredError.type = 'INVALID_RESPONSE';
+            throw structuredError;
+        } else if (error.name === 'AbortError') {
+            const structuredError = new Error('Request timed out');
+            structuredError.type = 'TIMEOUT';
+            throw structuredError;
+        } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            console.error('Network error:', error);
+            const structuredError = new Error('Unable to connect to server');
+            structuredError.type = 'NETWORK_ERROR';
+            throw structuredError;
+        } else {
+            console.error('API error:', error);
+            const structuredError = new Error(error.message || 'An unexpected error occurred');
+            structuredError.type = 'UNKNOWN';
+            throw structuredError;
+        }
+    }
+}
+
+/**
+ * Update an existing property (requires authentication)
+ * @param {number} id - Property ID
+ * @param {Object} propertyData - Property data to update
+ * @returns {Promise<Object>} Updated property object
+ * @throws {Error} Structured error with type property
+ */
+async function updateProperty(id, propertyData) {
+    const token = localStorage.getItem('stafin_admin_token');
+    
+    if (!token) {
+        const error = new Error('Not authenticated');
+        error.type = 'AUTH_ERROR';
+        throw error;
+    }
+
+    const url = `${API_BASE_URL}/properties/${id}/`;
+    
+    try {
+        const response = await fetchWithTimeout(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(propertyData),
+        });
+
+        if (response.status === 401) {
+            localStorage.removeItem('stafin_admin_token');
+            window.location.href = '/admin-login.html';
+            const error = new Error('Session expired');
+            error.type = 'AUTH_ERROR';
+            throw error;
+        }
+
+        if (!response.ok) {
+            const error = new Error(`API request failed with status ${response.status}`);
+            error.type = 'API_ERROR';
+            error.statusCode = response.status;
+            throw error;
+        }
+
+        const data = await response.json();
+        
+        if (!data) {
+            const error = new Error('Invalid response from server');
+            error.type = 'INVALID_RESPONSE';
+            throw error;
+        }
+
+        return data;
+    } catch (error) {
+        if (error.type) {
+            throw error;
+        }
+        
+        if (error instanceof SyntaxError) {
+            console.error('Invalid JSON response from API:', error);
+            const structuredError = new Error('Invalid response from server');
+            structuredError.type = 'INVALID_RESPONSE';
+            throw structuredError;
+        } else if (error.name === 'AbortError') {
+            const structuredError = new Error('Request timed out');
+            structuredError.type = 'TIMEOUT';
+            throw structuredError;
+        } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            console.error('Network error:', error);
+            const structuredError = new Error('Unable to connect to server');
+            structuredError.type = 'NETWORK_ERROR';
+            throw structuredError;
+        } else {
+            console.error('API error:', error);
+            const structuredError = new Error(error.message || 'An unexpected error occurred');
+            structuredError.type = 'UNKNOWN';
+            throw structuredError;
+        }
+    }
+}
+
+/**
+ * Delete a property (requires authentication)
+ * @param {number} id - Property ID
+ * @returns {Promise<void>}
+ * @throws {Error} Structured error with type property
+ */
+async function deleteProperty(id) {
+    const token = localStorage.getItem('stafin_admin_token');
+    
+    if (!token) {
+        const error = new Error('Not authenticated');
+        error.type = 'AUTH_ERROR';
+        throw error;
+    }
+
+    const url = `${API_BASE_URL}/properties/${id}/`;
+    
+    try {
+        const response = await fetchWithTimeout(url, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (response.status === 401) {
+            localStorage.removeItem('stafin_admin_token');
+            window.location.href = '/admin-login.html';
+            const error = new Error('Session expired');
+            error.type = 'AUTH_ERROR';
+            throw error;
+        }
+
+        if (!response.ok) {
+            const error = new Error(`API request failed with status ${response.status}`);
+            error.type = 'API_ERROR';
+            error.statusCode = response.status;
+            throw error;
+        }
+    } catch (error) {
+        if (error.type) {
+            throw error;
+        }
+        
+        if (error.name === 'AbortError') {
+            const structuredError = new Error('Request timed out');
+            structuredError.type = 'TIMEOUT';
+            throw structuredError;
+        } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            console.error('Network error:', error);
+            const structuredError = new Error('Unable to connect to server');
+            structuredError.type = 'NETWORK_ERROR';
+            throw structuredError;
+        } else {
+            console.error('API error:', error);
+            const structuredError = new Error(error.message || 'An unexpected error occurred');
+            structuredError.type = 'UNKNOWN';
+            throw structuredError;
+        }
+    }
+}
+
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { getProperties, getPropertyById };
+    module.exports = { getProperties, getPropertyById, createProperty, updateProperty, deleteProperty };
+}
+
+// Make functions available globally for browser
+if (typeof window !== 'undefined') {
+    window.getProperties = getProperties;
+    window.getPropertyById = getPropertyById;
+    window.createProperty = createProperty;
+    window.updateProperty = updateProperty;
+    window.deleteProperty = deleteProperty;
 }
