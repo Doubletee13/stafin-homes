@@ -1,7 +1,105 @@
 /**
  * Property Form Component
  * Reusable form for adding and editing properties
+ * Supports unified media[] (images + videos)
  */
+
+/**
+ * Validate a single URL string
+ * @param {string} url
+ * @returns {boolean}
+ */
+function isValidUrl(url) {
+    try {
+        const parsed = new URL(url.trim());
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Build media preview HTML for admin form
+ * @param {Array} media - Array of {type, url} objects
+ * @returns {string} HTML string
+ */
+function buildMediaPreviewHtml(media) {
+    if (!media || media.length === 0) {
+        return `<p class="text-gray-400 text-sm text-center py-4">No media added yet.</p>`;
+    }
+
+    return media.map((item, i) => {
+        const isValid = isValidUrl(item.url);
+        const borderClass = isValid ? 'border-green-200' : 'border-red-300 bg-red-50';
+        const badgeClass = item.type === 'video'
+            ? 'bg-purple-100 text-purple-700'
+            : 'bg-blue-100 text-blue-700';
+
+        if (!isValid) {
+            return `
+                <div class="flex items-center gap-2 p-2 border rounded-lg ${borderClass}">
+                    <span class="text-red-500 text-xs">⚠ Invalid URL</span>
+                    <span class="text-gray-500 text-xs truncate flex-1">${item.url}</span>
+                </div>
+            `;
+        }
+
+        if (item.type === 'image') {
+            return `
+                <div class="relative border rounded-lg overflow-hidden ${borderClass}">
+                    <span class="absolute top-1 left-1 text-xs px-2 py-0.5 rounded-full font-medium ${badgeClass}">Image</span>
+                    <img src="${item.url}"
+                         alt="Preview ${i + 1}"
+                         class="w-full h-28 object-cover"
+                         onerror="this.parentElement.classList.add('border-red-300'); this.src=''; this.alt='Load error'; this.className='hidden';" />
+                </div>
+            `;
+        } else {
+            return `
+                <div class="relative border rounded-lg overflow-hidden ${borderClass}">
+                    <span class="absolute top-1 left-1 z-10 text-xs px-2 py-0.5 rounded-full font-medium ${badgeClass}">Video</span>
+                    <video src="${item.url}"
+                           class="w-full h-28 object-cover bg-black"
+                           muted preload="metadata">
+                    </video>
+                </div>
+            `;
+        }
+    }).join('');
+}
+
+/**
+ * Update media preview panel from form inputs
+ * @param {HTMLFormElement} form
+ */
+function updateMediaPreview(form) {
+    const imageInput = form.querySelector('#media_images');
+    const videoInput = form.querySelector('#media_videos');
+    const previewContainer = form.querySelector('#media-preview-grid');
+    if (!previewContainer) return;
+
+    const imageUrls = (imageInput?.value || '')
+        .split('\n').map(u => u.trim()).filter(Boolean)
+        .map(url => ({ type: 'image', url }));
+
+    const videoUrls = (videoInput?.value || '')
+        .split('\n').map(u => u.trim()).filter(Boolean)
+        .map(url => ({ type: 'video', url }));
+
+    const all = [...imageUrls, ...videoUrls];
+    previewContainer.innerHTML = buildMediaPreviewHtml(all);
+}
+
+/**
+ * Build initial textarea values from media array
+ * @param {Array} media
+ * @param {'image'|'video'} type
+ * @returns {string}
+ */
+function buildTextareaValue(media, type) {
+    if (!Array.isArray(media)) return '';
+    return media.filter(m => m.type === type).map(m => m.url).join('\n');
+}
 
 /**
  * Render property form
@@ -13,6 +111,10 @@
 function renderPropertyForm(property, onSubmit, onCancel) {
     const isEditMode = !!property;
     let isSubmitting = false;
+
+    const existingMedia = property?.media || [];
+    const existingImgText = buildTextareaValue(existingMedia, 'image');
+    const existingVidText = buildTextareaValue(existingMedia, 'video');
 
     const formContainer = document.createElement('div');
     formContainer.className = 'bg-white rounded-lg shadow-lg p-6';
@@ -122,7 +224,7 @@ function renderPropertyForm(property, onSubmit, onCancel) {
                     name="bedrooms"
                     required
                     min="0"
-                    value="${property?.bedrooms || ''}"
+                    value="${property?.bedrooms ?? ''}"
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                     placeholder="e.g., 3"
                 />
@@ -139,25 +241,49 @@ function renderPropertyForm(property, onSubmit, onCancel) {
                     name="bathrooms"
                     required
                     min="0"
-                    value="${property?.bathrooms || ''}"
+                    value="${property?.bathrooms ?? ''}"
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                     placeholder="e.g., 2"
                 />
                 <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="bathrooms"></p>
             </div>
 
+            <!-- Media Section: Images -->
             <div class="col-span-2">
-                <label for="image_urls" class="block text-sm font-medium text-gray-700 mb-2">
-                    Image URLs (one per line)
+                <label for="media_images" class="block text-sm font-medium text-gray-700 mb-2">
+                    🖼 Image URLs <span class="text-gray-400 font-normal">(one per line)</span>
                 </label>
                 <textarea
-                    id="image_urls"
-                    name="image_urls"
+                    id="media_images"
+                    name="media_images"
                     rows="3"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition resize-none"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition resize-none font-mono text-sm"
                     placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
-                >${property?.image_urls?.join('\n') || ''}</textarea>
-                <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="image_urls"></p>
+                >${existingImgText}</textarea>
+                <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="media_images"></p>
+            </div>
+
+            <!-- Media Section: Videos -->
+            <div class="col-span-2">
+                <label for="media_videos" class="block text-sm font-medium text-gray-700 mb-2">
+                    🎥 Video URLs <span class="text-gray-400 font-normal">(one per line)</span>
+                </label>
+                <textarea
+                    id="media_videos"
+                    name="media_videos"
+                    rows="3"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition resize-none font-mono text-sm"
+                    placeholder="https://example.com/tour.mp4&#10;https://example.com/walkthrough.mp4"
+                >${existingVidText}</textarea>
+                <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="media_videos"></p>
+            </div>
+
+            <!-- Live Media Preview -->
+            <div class="col-span-2">
+                <p class="text-sm font-medium text-gray-700 mb-2">📷 Media Preview</p>
+                <div id="media-preview-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 min-h-[80px] p-3 border border-dashed border-gray-200 rounded-lg bg-gray-50">
+                    <p class="text-gray-400 text-sm text-center py-4 col-span-full">No media added yet.</p>
+                </div>
             </div>
         </div>
 
@@ -185,19 +311,15 @@ function renderPropertyForm(property, onSubmit, onCancel) {
     // Add event listeners
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        // Prevent duplicate submissions
-        if (isSubmitting) {
-            return;
-        }
+
+        if (isSubmitting) return;
 
         const formData = getFormData(form);
-        
+
         if (validateForm(formData, form)) {
             const submitBtn = form.querySelector('#submit-btn');
             const originalText = submitBtn.textContent;
-            
-            // Set submitting state
+
             isSubmitting = true;
             submitBtn.disabled = true;
             submitBtn.textContent = isEditMode ? 'Updating...' : 'Adding...';
@@ -206,10 +328,8 @@ function renderPropertyForm(property, onSubmit, onCancel) {
             try {
                 await onSubmit(formData);
             } catch (error) {
-                // Let the caller handle the error
                 throw error;
             } finally {
-                // Reset submitting state
                 isSubmitting = false;
                 submitBtn.disabled = false;
                 submitBtn.textContent = originalText;
@@ -233,6 +353,16 @@ function renderPropertyForm(property, onSubmit, onCancel) {
         });
     });
 
+    // Live preview: update on media textarea input
+    const mediaImages = form.querySelector('#media_images');
+    const mediaVideos = form.querySelector('#media_videos');
+    const onMediaInput = () => updateMediaPreview(form);
+    mediaImages?.addEventListener('input', onMediaInput);
+    mediaVideos?.addEventListener('input', onMediaInput);
+
+    // Initial preview render
+    setTimeout(() => updateMediaPreview(form), 0);
+
     formContainer.appendChild(form);
     return formContainer;
 }
@@ -240,11 +370,23 @@ function renderPropertyForm(property, onSubmit, onCancel) {
 /**
  * Get form data as object
  * @param {HTMLFormElement} form - Form element
- * @returns {Object} Form data object
+ * @returns {Object} Form data object  
  */
 function getFormData(form) {
     const formData = new FormData(form);
-    const data = {
+
+    // Parse images and videos textareas into unified media array
+    const imageUrls = (formData.get('media_images') || '')
+        .split('\n').map(url => url.trim()).filter(url => url);
+    const videoUrls = (formData.get('media_videos') || '')
+        .split('\n').map(url => url.trim()).filter(url => url);
+
+    const media = [
+        ...imageUrls.map(url => ({ type: 'image', url })),
+        ...videoUrls.map(url => ({ type: 'video', url }))
+    ];
+
+    return {
         title: formData.get('title'),
         description: formData.get('description'),
         price: parseFloat(formData.get('price')),
@@ -252,12 +394,8 @@ function getFormData(form) {
         property_type: formData.get('property_type'),
         bedrooms: parseInt(formData.get('bedrooms'), 10),
         bathrooms: parseInt(formData.get('bathrooms'), 10),
-        image_urls: formData.get('image_urls')
-            ? formData.get('image_urls').split('\n').map(url => url.trim()).filter(url => url)
-            : []
+        media
     };
-
-    return data;
 }
 
 /**
@@ -286,14 +424,18 @@ function validateForm(data, form) {
         }
     });
 
+    // Validate media URLs if any were entered
+    const invalidImages = (data.media || []).filter(m => !isValidUrl(m.url));
+    if (invalidImages.length > 0) {
+        showFieldError(form, 'media_images', `${invalidImages.length} invalid URL(s) detected — please fix highlighted entries in the preview.`);
+        isValid = false;
+    }
+
     return isValid;
 }
 
 /**
  * Show field error
- * @param {HTMLFormElement} form - Form element
- * @param {string} field - Field name
- * @param {string} message - Error message
  */
 function showFieldError(form, field, message) {
     const errorElement = form.querySelector(`[data-field="${field}"]`);
@@ -305,8 +447,6 @@ function showFieldError(form, field, message) {
 
 /**
  * Show form error
- * @param {HTMLFormElement} form - Form element
- * @param {string} message - Error message
  */
 function showFormError(form, message) {
     const errorElement = form.querySelector('#form-error');
@@ -318,7 +458,6 @@ function showFormError(form, message) {
 
 /**
  * Clear all form errors
- * @param {HTMLFormElement} form - Form element
  */
 function clearFormErrors(form) {
     const errorElements = form.querySelectorAll('.field-error, #form-error');

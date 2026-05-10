@@ -2,12 +2,9 @@
  * Property Details View Component
  * Renders full property details with defensive programming
  * Handles missing data gracefully
+ * Uses unified media[] format and the mediaCarousel component.
  */
 
-/**
- * Fallback image URL for broken images
- */
-const FALLBACK_IMAGE_URL = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200&auto=format&fit=crop&q=60';
 
 /**
  * Format price to currency string
@@ -69,37 +66,34 @@ function renderPropertyDetails(property) {
     const price = property.price ?? 0;
     const bedrooms = property.bedrooms ?? 0;
     const bathrooms = property.bathrooms ?? 0;
-    const imageUrls = property.image_urls || [];
+    // Support unified media[] and also legacy image_urls for read safety
+    let media = property.media || [];
+    if ((!media || media.length === 0) && property.image_urls && property.image_urls.length > 0) {
+        media = property.image_urls.map(url => ({ type: 'image', url }));
+    }
     const createdAt = property.created_at || '';
-
-    // Get first image or use placeholder
-    const mainImage = imageUrls.length > 0 
-        ? imageUrls[0] 
-        : FALLBACK_IMAGE_URL;
 
     const typeLabel = getPropertyTypeLabel(propertyType);
     const typeColor = getPropertyTypeColor(propertyType);
     const formattedPrice = formatPrice(price);
+    const mediaCount = media.length;
+    const imageCount = media.filter(m => m.type === 'image').length;
+    const videoCount = media.filter(m => m.type === 'video').length;
 
     // Format date if available
-    const formattedDate = createdAt 
+    const formattedDate = createdAt
         ? new Date(createdAt).toLocaleDateString('en-NG', {
             year: 'numeric',
             month: 'long',
             day: 'numeric'
-          })
+        })
         : '';
 
+    // ── Build static HTML shell (carousel injected via DOM) ──────────────
     container.innerHTML = `
-        <!-- Image Gallery -->
-        <div class="relative h-96 overflow-hidden bg-gray-200">
-            <img 
-                src="${mainImage}" 
-                alt="${title}"
-                class="w-full h-full object-cover"
-                onerror="this.src='${FALLBACK_IMAGE_URL}'"
-            />
-            <div class="absolute top-4 right-4">
+        <!-- Media Carousel Slot -->
+        <div id="carousel-slot" class="relative">
+            <div class="absolute top-4 right-4 z-30">
                 <span class="px-4 py-2 rounded-full text-sm font-semibold ${typeColor}">
                     ${typeLabel}
                 </span>
@@ -160,9 +154,9 @@ function renderPropertyDetails(property) {
                         <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                         </svg>
-                        <span class="text-lg font-semibold text-gray-900">${imageUrls.length}</span>
+                        <span class="text-lg font-semibold text-gray-900">${mediaCount}</span>
                     </div>
-                    <p class="text-sm text-gray-600">Photos</p>
+                    <p class="text-sm text-gray-600">${imageCount > 0 && videoCount > 0 ? 'Photos & Videos' : imageCount > 0 ? 'Photos' : 'Videos'}</p>
                 </div>
             </div>
 
@@ -171,25 +165,15 @@ function renderPropertyDetails(property) {
                 <h2 class="text-xl font-semibold text-gray-900 mb-4">Description</h2>
                 <p class="text-gray-700 leading-relaxed whitespace-pre-line">${description}</p>
             </div>
-
-            <!-- Image Gallery (if multiple images) -->
-            ${imageUrls.length > 1 ? `
-                <div>
-                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Photo Gallery</h2>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        ${imageUrls.slice(1).map(url => `
-                            <img 
-                                src="${url}" 
-                                alt="Property photo"
-                                class="w-full h-32 object-cover rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
-                                onerror="this.src='${FALLBACK_IMAGE_URL}'"
-                            />
-                        `).join('')}
-                    </div>
-                </div>
-            ` : ''}
         </div>
     `;
+
+    // ── Inject media carousel into the slot ──────────────────────────────
+    const carouselSlot = container.querySelector('#carousel-slot');
+    if (carouselSlot && typeof createMediaCarousel === 'function') {
+        const carousel = createMediaCarousel(media, title);
+        carouselSlot.insertBefore(carousel, carouselSlot.firstChild);
+    }
 
     return container;
 }

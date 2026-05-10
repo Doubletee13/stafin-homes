@@ -55,16 +55,21 @@ function renderPropertyCard(property) {
     const card = document.createElement('div');
     card.className = 'bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer';
     card.setAttribute('data-property-id', property.id);
-    
+
     // Navigate to property details on click
     card.addEventListener('click', () => {
         window.location.href = `/property-details.html?id=${property.id}`;
     });
 
-    // Get first image or use placeholder
-    const imageUrl = property.image_urls && property.image_urls.length > 0 
-        ? property.image_urls[0] 
+    // Get first image from media[] or legacy image_urls, or use placeholder
+    const mediaList = property.media && property.media.length > 0
+        ? property.media
+        : (property.image_urls || []).map(url => ({ type: 'image', url }));
+    const firstImage = mediaList.find(m => m.type === 'image');
+    const imageUrl = firstImage
+        ? firstImage.url
         : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&auto=format&fit=crop&q=60';
+
 
     const typeLabel = getPropertyTypeLabel(property.property_type);
     const typeColor = getPropertyTypeColor(property.property_type);
