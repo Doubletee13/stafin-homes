@@ -22,5 +22,6 @@ class Property(Base):
     property_type = Column(Enum(PropertyType), nullable=False)
     bedrooms = Column(Integer, nullable=False, default=0)
     bathrooms = Column(Integer, nullable=False, default=0)
-    image_urls = Column(JSON, nullable=True, default=list)
+    # Unified media column: list of {"type": "image"|"video", "url": "..."} objects
+    media = Column(JSON, nullable=True, default=list)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
