@@ -1,7 +1,7 @@
 /**
  * Property Form Component
  * Reusable form for adding and editing properties
- * Supports unified media[] (images + videos)
+ * Supports unified media[] (images + videos) with Cloudinary Dropzone
  */
 
 /**
@@ -20,86 +20,59 @@ function isValidUrl(url) {
 
 /**
  * Build media preview HTML for admin form
- * @param {Array} media - Array of {type, url} objects
+ * @param {Array} media - Array of media objects
  * @returns {string} HTML string
  */
 function buildMediaPreviewHtml(media) {
     if (!media || media.length === 0) {
-        return `<p class="text-gray-400 text-sm text-center py-4">No media added yet.</p>`;
+        return `<p class="text-gray-400 text-sm text-center py-4 col-span-full">No media added yet.</p>`;
     }
 
     return media.map((item, i) => {
+        if (item.uploading) {
+            return `
+                <div class="relative border rounded-lg overflow-hidden border-indigo-200 flex flex-col items-center justify-center bg-gray-50 h-28 shadow-sm">
+                    <svg class="animate-spin h-6 w-6 text-indigo-600 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                    </svg>
+                    <span class="text-xs text-indigo-600 font-medium tracking-wide">Uploading...</span>
+                </div>
+            `;
+        }
+
         const isValid = isValidUrl(item.url);
-        const borderClass = isValid ? 'border-green-200' : 'border-red-300 bg-red-50';
+        const borderClass = isValid ? 'border-gray-200' : 'border-red-300 bg-red-50';
         const badgeClass = item.type === 'video'
             ? 'bg-purple-100 text-purple-700'
             : 'bg-blue-100 text-blue-700';
 
         if (!isValid) {
             return `
-                <div class="flex items-center gap-2 p-2 border rounded-lg ${borderClass}">
+                <div class="flex items-center gap-2 p-2 border rounded-lg ${borderClass} h-28">
                     <span class="text-red-500 text-xs">⚠ Invalid URL</span>
-                    <span class="text-gray-500 text-xs truncate flex-1">${item.url}</span>
+                    <button class="delete-media-btn ml-auto bg-red-500 text-white rounded p-1" data-index="${i}" type="button">Del</button>
                 </div>
             `;
         }
 
-        if (item.type === 'image') {
-            return `
-                <div class="relative border rounded-lg overflow-hidden ${borderClass}">
-                    <span class="absolute top-1 left-1 text-xs px-2 py-0.5 rounded-full font-medium ${badgeClass}">Image</span>
-                    <img src="${item.url}"
-                         alt="Preview ${i + 1}"
-                         class="w-full h-28 object-cover"
-                         onerror="this.parentElement.classList.add('border-red-300'); this.src=''; this.alt='Load error'; this.className='hidden';" />
-                </div>
-            `;
-        } else {
-            return `
-                <div class="relative border rounded-lg overflow-hidden ${borderClass}">
-                    <span class="absolute top-1 left-1 z-10 text-xs px-2 py-0.5 rounded-full font-medium ${badgeClass}">Video</span>
-                    <video src="${item.url}"
-                           class="w-full h-28 object-cover bg-black"
-                           muted preload="metadata">
-                    </video>
-                </div>
-            `;
-        }
+        return `
+            <div class="relative border rounded-lg overflow-hidden ${borderClass} group h-28 bg-black">
+                <span class="absolute top-1 left-1 z-10 text-xs px-2 py-0.5 rounded-full font-medium ${badgeClass} shadow-sm backdrop-blur-md bg-opacity-90">
+                    ${item.type === 'video' ? 'Video' : 'Image'}
+                </span>
+                <button data-index="${i}" class="delete-media-btn absolute top-1 right-1 z-10 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 shadow-sm hover:bg-red-600" type="button" title="Remove">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                ${item.type === 'image'
+                ? `<img src="${item.url}" alt="Preview ${i + 1}" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" onerror="this.src=''; this.alt='Load error';">`
+                : `<video src="${item.url}" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" muted preload="metadata"></video>`
+            }
+            </div>
+        `;
     }).join('');
 }
 
-/**
- * Update media preview panel from form inputs
- * @param {HTMLFormElement} form
- */
-function updateMediaPreview(form) {
-    const imageInput = form.querySelector('#media_images');
-    const videoInput = form.querySelector('#media_videos');
-    const previewContainer = form.querySelector('#media-preview-grid');
-    if (!previewContainer) return;
-
-    const imageUrls = (imageInput?.value || '')
-        .split('\n').map(u => u.trim()).filter(Boolean)
-        .map(url => ({ type: 'image', url }));
-
-    const videoUrls = (videoInput?.value || '')
-        .split('\n').map(u => u.trim()).filter(Boolean)
-        .map(url => ({ type: 'video', url }));
-
-    const all = [...imageUrls, ...videoUrls];
-    previewContainer.innerHTML = buildMediaPreviewHtml(all);
-}
-
-/**
- * Build initial textarea values from media array
- * @param {Array} media
- * @param {'image'|'video'} type
- * @returns {string}
- */
-function buildTextareaValue(media, type) {
-    if (!Array.isArray(media)) return '';
-    return media.filter(m => m.type === type).map(m => m.url).join('\n');
-}
 
 /**
  * Render property form
@@ -111,10 +84,10 @@ function buildTextareaValue(media, type) {
 function renderPropertyForm(property, onSubmit, onCancel) {
     const isEditMode = !!property;
     let isSubmitting = false;
+    let isUploading = false;
 
-    const existingMedia = property?.media || [];
-    const existingImgText = buildTextareaValue(existingMedia, 'image');
-    const existingVidText = buildTextareaValue(existingMedia, 'video');
+    // Isolate media state for the interactive upload grid
+    let currentMedia = [...(property?.media || [])];
 
     const formContainer = document.createElement('div');
     formContainer.className = 'bg-white rounded-lg shadow-lg p-6';
@@ -132,80 +105,41 @@ function renderPropertyForm(property, onSubmit, onCancel) {
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="col-span-2">
-                <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
-                    Title *
-                </label>
-                <input
-                    type="text"
-                    id="title"
-                    name="title"
-                    required
-                    value="${property?.title || ''}"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                    placeholder="e.g., Luxury Apartment in Lekki"
-                />
+                <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Title *</label>
+                <input type="text" id="title" name="title" required value="${property?.title || ''}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                       placeholder="e.g., Luxury Apartment in Lekki" />
                 <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="title"></p>
             </div>
 
             <div class="col-span-2">
-                <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
-                    Description *
-                </label>
-                <textarea
-                    id="description"
-                    name="description"
-                    required
-                    rows="4"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition resize-none"
-                    placeholder="Describe the property..."
-                >${property?.description || ''}</textarea>
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                <textarea id="description" name="description" required rows="4"
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition resize-none"
+                          placeholder="Describe the property...">${property?.description || ''}</textarea>
                 <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="description"></p>
             </div>
 
             <div>
-                <label for="price" class="block text-sm font-medium text-gray-700 mb-2">
-                    Price (NGN) *
-                </label>
-                <input
-                    type="number"
-                    id="price"
-                    name="price"
-                    required
-                    min="0"
-                    step="0.01"
-                    value="${property?.price || ''}"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                    placeholder="e.g., 50000000"
-                />
+                <label for="price" class="block text-sm font-medium text-gray-700 mb-2">Price (NGN) *</label>
+                <input type="number" id="price" name="price" required min="0" step="0.01" value="${property?.price || ''}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                       placeholder="e.g., 50000000" />
                 <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="price"></p>
             </div>
 
             <div>
-                <label for="location" class="block text-sm font-medium text-gray-700 mb-2">
-                    Location *
-                </label>
-                <input
-                    type="text"
-                    id="location"
-                    name="location"
-                    required
-                    value="${property?.location || ''}"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                    placeholder="e.g., Lekki, Lagos"
-                />
+                <label for="location" class="block text-sm font-medium text-gray-700 mb-2">Location *</label>
+                <input type="text" id="location" name="location" required value="${property?.location || ''}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                       placeholder="e.g., Lekki, Lagos" />
                 <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="location"></p>
             </div>
 
             <div>
-                <label for="property_type" class="block text-sm font-medium text-gray-700 mb-2">
-                    Property Type *
-                </label>
-                <select
-                    id="property_type"
-                    name="property_type"
-                    required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                >
+                <label for="property_type" class="block text-sm font-medium text-gray-700 mb-2">Property Type *</label>
+                <select id="property_type" name="property_type" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
                     <option value="">Select type</option>
                     <option value="sale" ${property?.property_type === 'sale' ? 'selected' : ''}>For Sale</option>
                     <option value="rent" ${property?.property_type === 'rent' ? 'selected' : ''}>For Rent</option>
@@ -215,75 +149,51 @@ function renderPropertyForm(property, onSubmit, onCancel) {
             </div>
 
             <div>
-                <label for="bedrooms" class="block text-sm font-medium text-gray-700 mb-2">
-                    Bedrooms *
-                </label>
-                <input
-                    type="number"
-                    id="bedrooms"
-                    name="bedrooms"
-                    required
-                    min="0"
-                    value="${property?.bedrooms ?? ''}"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                    placeholder="e.g., 3"
-                />
+                <label for="bedrooms" class="block text-sm font-medium text-gray-700 mb-2">Bedrooms *</label>
+                <input type="number" id="bedrooms" name="bedrooms" required min="0" value="${property?.bedrooms ?? ''}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                       placeholder="e.g., 3" />
                 <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="bedrooms"></p>
             </div>
 
             <div>
-                <label for="bathrooms" class="block text-sm font-medium text-gray-700 mb-2">
-                    Bathrooms *
-                </label>
-                <input
-                    type="number"
-                    id="bathrooms"
-                    name="bathrooms"
-                    required
-                    min="0"
-                    value="${property?.bathrooms ?? ''}"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                    placeholder="e.g., 2"
-                />
+                <label for="bathrooms" class="block text-sm font-medium text-gray-700 mb-2">Bathrooms *</label>
+                <input type="number" id="bathrooms" name="bathrooms" required min="0" value="${property?.bathrooms ?? ''}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                       placeholder="e.g., 2" />
                 <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="bathrooms"></p>
             </div>
-
-            <!-- Media Section: Images -->
+            
+            <!-- Media Upload Dropzone -->
             <div class="col-span-2">
-                <label for="media_images" class="block text-sm font-medium text-gray-700 mb-2">
-                    🖼 Image URLs <span class="text-gray-400 font-normal">(one per line)</span>
-                </label>
-                <textarea
-                    id="media_images"
-                    name="media_images"
-                    rows="3"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition resize-none font-mono text-sm"
-                    placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
-                >${existingImgText}</textarea>
-                <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="media_images"></p>
-            </div>
-
-            <!-- Media Section: Videos -->
-            <div class="col-span-2">
-                <label for="media_videos" class="block text-sm font-medium text-gray-700 mb-2">
-                    🎥 Video URLs <span class="text-gray-400 font-normal">(one per line)</span>
-                </label>
-                <textarea
-                    id="media_videos"
-                    name="media_videos"
-                    rows="3"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition resize-none font-mono text-sm"
-                    placeholder="https://example.com/tour.mp4&#10;https://example.com/walkthrough.mp4"
-                >${existingVidText}</textarea>
-                <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="media_videos"></p>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Upload Content (Images & Videos) *</label>
+                <div id="drop-zone" class="w-full flex justify-center px-6 pt-5 pb-6 border-2 border-indigo-200 bg-indigo-50/30 border-dashed rounded-lg cursor-pointer hover:bg-indigo-50 transition">
+                    <div class="space-y-1 text-center">
+                        <svg class="mx-auto h-12 w-12 text-indigo-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <div class="flex flex-col sm:flex-row text-sm text-gray-600 justify-center items-center gap-1">
+                            <label for="file-upload" class="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
+                                <span>Upload files</span>
+                                <input id="file-upload" name="file-upload" type="file" multiple class="sr-only" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm">
+                            </label>
+                            <p>or drag and drop them here</p>
+                        </div>
+                        <p class="text-xs text-gray-500">PNG, JPG, WEBP, MP4, WEBM up to 50MB</p>
+                    </div>
+                </div>
             </div>
 
             <!-- Live Media Preview -->
             <div class="col-span-2">
-                <p class="text-sm font-medium text-gray-700 mb-2">📷 Media Preview</p>
+                <p class="text-sm font-medium text-gray-700 mb-2 flex justify-between items-end">
+                    <span>📷 Media View</span>
+                    <span id="media-count" class="text-xs text-gray-400">0 items</span>
+                </p>
                 <div id="media-preview-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 min-h-[80px] p-3 border border-dashed border-gray-200 rounded-lg bg-gray-50">
                     <p class="text-gray-400 text-sm text-center py-4 col-span-full">No media added yet.</p>
                 </div>
+                <p class="field-error text-red-500 text-sm mt-1 hidden" id="media-error"></p>
             </div>
         </div>
 
@@ -291,49 +201,195 @@ function renderPropertyForm(property, onSubmit, onCancel) {
         </div>
 
         <div class="flex justify-end space-x-4 pt-4 border-t border-gray-200">
-            <button
-                type="button"
-                id="cancel-btn"
-                class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
-            >
+            <button type="button" id="cancel-btn"
+                class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium">
                 Cancel
             </button>
-            <button
-                type="submit"
-                id="submit-btn"
-                class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium"
-            >
+            <button type="submit" id="submit-btn"
+                class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium">
                 ${isEditMode ? 'Update Property' : 'Add Property'}
             </button>
         </div>
     `;
 
-    // Add event listeners
+    // Dropzone logic
+    const dropZone = form.querySelector('#drop-zone');
+    const fileInput = form.querySelector('#file-upload');
+    const previewContainer = form.querySelector('#media-preview-grid');
+    const submitBtn = form.querySelector('#submit-btn');
+
+    const updateSubmitBtnState = () => {
+        if (isUploading || isSubmitting) {
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+            submitBtn.textContent = isUploading ? 'Uploading...' : (isEditMode ? 'Updating...' : 'Adding...');
+        } else {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+            submitBtn.textContent = isEditMode ? 'Update Property' : 'Add Property';
+        }
+    };
+
+    const renderPreview = () => {
+        previewContainer.innerHTML = buildMediaPreviewHtml(currentMedia);
+        form.querySelector('#media-count').textContent = `${currentMedia.length} item(s)`;
+
+        // Ensure form knows to unhide errors resolving to valid
+        if (currentMedia.length > 0 && currentMedia.every(m => !m.uploading && m.url)) {
+            const errorElement = form.querySelector('#media-error');
+            errorElement.classList.add('hidden');
+        }
+
+        // Attach event listeners to newly rendered delete buttons
+        const delBtns = previewContainer.querySelectorAll('.delete-media-btn');
+        delBtns.forEach(btn => {
+            btn.onclick = async () => {
+                const index = parseInt(btn.getAttribute('data-index'), 10);
+                const item = currentMedia[index];
+
+                // Optimistically remove from UI
+                currentMedia.splice(index, 1);
+                renderPreview();
+
+                // If it is stored in Cloudinary via this session or previously, attempt to permanently delete 
+                // to prevent orphaned cloud states. Public_id exists if newly uploaded. 
+                if (item && item.public_id) {
+                    try {
+                        const token = localStorage.getItem('stafin_admin_token');
+                        await fetch(`${window.API_BASE_URL || 'http://localhost:8000'}/media/delete?public_id=${item.public_id}&resource_type=${item.type}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                    } catch (e) {
+                        console.warn("Failed deleting cleanly over Cloudinary.", e)
+                    }
+                }
+            };
+        });
+    }
+
+    const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+    const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm'];
+    const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES];
+
+    const handleFiles = async (files) => {
+        if (!files || files.length === 0) return;
+
+        isUploading = true;
+        updateSubmitBtnState();
+
+        // Convert to array
+        const filesArray = Array.from(files);
+
+        for (let i = 0; i < filesArray.length; i++) {
+            const file = filesArray[i];
+
+            // --- Client-side validation: reject disallowed types immediately ---
+            if (!ALLOWED_TYPES.includes(file.type)) {
+                const formError = form.querySelector('#form-error');
+                formError.textContent = `"${file.name}" is not supported. Allowed types: JPG, PNG, WEBP, MP4, WEBM.`;
+                formError.classList.remove('hidden');
+                setTimeout(() => formError.classList.add('hidden'), 5000);
+                continue; // Skip this file
+            }
+
+            const mediaType = ALLOWED_VIDEO_TYPES.includes(file.type) ? 'video' : 'image';
+            const tempId = Date.now() + i.toString();
+
+            // Add placeholder instantly showing it as uploading
+            currentMedia.push({ type: mediaType, url: '', uploading: true, tempId });
+            renderPreview();
+
+
+            try {
+                const fd = new FormData();
+                fd.append('file', file);
+                const token = localStorage.getItem('stafin_admin_token');
+
+                const res = await fetch(`${window.API_BASE_URL || 'http://localhost:8000'}/media/upload`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: fd
+                });
+
+                if (!res.ok) {
+                    const errorJson = await res.json().catch(() => ({}));
+                    throw new Error(errorJson.detail || 'Upload failed');
+                }
+
+                const data = await res.json();
+
+                // Find and replace the temporary item with real secure_url payload
+                const idx = currentMedia.findIndex(m => m.tempId === tempId);
+                if (idx > -1) {
+                    currentMedia[idx] = data; // {type, url, public_id}
+                }
+            } catch (err) {
+                // Wipe the invalid temp upload if error happens
+                const idx = currentMedia.findIndex(m => m.tempId === tempId);
+                if (idx > -1) {
+                    currentMedia.splice(idx, 1);
+                }
+
+                // Show localized error natively without dropping component entirely
+                const formError = form.querySelector('#form-error');
+                formError.textContent = `Upload failed for ${file.name}: ${err.message}`;
+                formError.classList.remove('hidden');
+                setTimeout(() => formError.classList.add('hidden'), 5000);
+            }
+            renderPreview();
+        }
+
+        // Clear file input so the same files can be selected again
+        fileInput.value = '';
+        isUploading = false;
+        updateSubmitBtnState();
+    };
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-indigo-500', 'bg-indigo-100');
+    });
+
+    ['dragleave', 'dragend'].forEach(type => {
+        dropZone.addEventListener(type, () => dropZone.classList.remove('border-indigo-500', 'bg-indigo-100'));
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-indigo-500', 'bg-indigo-100');
+        handleFiles(e.dataTransfer.files);
+    });
+
+    // Handle form bounds directly pointing to currentMedia cleanly
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        if (isSubmitting) return;
+        if (isSubmitting || isUploading) return;
 
-        const formData = getFormData(form);
+        // Custom validation check enforcing at least one properly uploaded unit.
+        if (currentMedia.length === 0 || currentMedia.some(m => !m.url)) {
+            const errorElement = form.querySelector('#media-error');
+            errorElement.textContent = "Please upload at least one valid media item before submitting.";
+            errorElement.classList.remove('hidden');
+            return;
+        }
+
+        const formData = getFormData(form, currentMedia);
 
         if (validateForm(formData, form)) {
-            const submitBtn = form.querySelector('#submit-btn');
-            const originalText = submitBtn.textContent;
-
             isSubmitting = true;
-            submitBtn.disabled = true;
-            submitBtn.textContent = isEditMode ? 'Updating...' : 'Adding...';
-            submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+            updateSubmitBtnState();
 
             try {
                 await onSubmit(formData);
             } catch (error) {
-                throw error;
-            } finally {
                 isSubmitting = false;
-                submitBtn.disabled = false;
-                submitBtn.textContent = originalText;
-                submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+                updateSubmitBtnState();
+                throw error;
             }
         }
     });
@@ -341,11 +397,10 @@ function renderPropertyForm(property, onSubmit, onCancel) {
     form.querySelector('#cancel-btn').addEventListener('click', onCancel);
 
     // Clear field errors on input
-    const inputs = form.querySelectorAll('input, textarea, select');
+    const inputs = form.querySelectorAll('input, select, textarea');
     inputs.forEach(input => {
         input.addEventListener('input', () => {
-            const fieldName = input.name;
-            const errorElement = form.querySelector(`[data-field="${fieldName}"]`);
+            const errorElement = form.querySelector(`[data-field="${input.name}"]`);
             if (errorElement) {
                 errorElement.textContent = '';
                 errorElement.classList.add('hidden');
@@ -353,15 +408,8 @@ function renderPropertyForm(property, onSubmit, onCancel) {
         });
     });
 
-    // Live preview: update on media textarea input
-    const mediaImages = form.querySelector('#media_images');
-    const mediaVideos = form.querySelector('#media_videos');
-    const onMediaInput = () => updateMediaPreview(form);
-    mediaImages?.addEventListener('input', onMediaInput);
-    mediaVideos?.addEventListener('input', onMediaInput);
-
-    // Initial preview render
-    setTimeout(() => updateMediaPreview(form), 0);
+    // Initial preview render trigger
+    setTimeout(() => renderPreview(), 0);
 
     formContainer.appendChild(form);
     return formContainer;
@@ -370,21 +418,11 @@ function renderPropertyForm(property, onSubmit, onCancel) {
 /**
  * Get form data as object
  * @param {HTMLFormElement} form - Form element
+ * @param {Array} mediaArray - Current uploaded media instances tracking
  * @returns {Object} Form data object  
  */
-function getFormData(form) {
+function getFormData(form, mediaArray) {
     const formData = new FormData(form);
-
-    // Parse images and videos textareas into unified media array
-    const imageUrls = (formData.get('media_images') || '')
-        .split('\n').map(url => url.trim()).filter(url => url);
-    const videoUrls = (formData.get('media_videos') || '')
-        .split('\n').map(url => url.trim()).filter(url => url);
-
-    const media = [
-        ...imageUrls.map(url => ({ type: 'image', url })),
-        ...videoUrls.map(url => ({ type: 'video', url }))
-    ];
 
     return {
         title: formData.get('title'),
@@ -394,45 +432,43 @@ function getFormData(form) {
         property_type: formData.get('property_type'),
         bedrooms: parseInt(formData.get('bedrooms'), 10),
         bathrooms: parseInt(formData.get('bathrooms'), 10),
-        media
+        // Expose only unified payload standards ensuring back-compat preservation
+        media: mediaArray.map(m => ({ type: m.type, url: m.url }))
     };
 }
 
 /**
- * Validate form data
- * @param {Object} data - Form data object
- * @param {HTMLFormElement} form - Form element for error display
- * @returns {boolean} True if valid
+ * Validate form data cleanly natively avoiding heavy 3rd-party libs
+ * @param {Object} data 
+ * @param {HTMLFormElement} form 
+ * @returns {boolean}
  */
 function validateForm(data, form) {
     let isValid = true;
 
-    const validations = [
-        { field: 'title', condition: data.title && data.title.trim(), message: 'Title is required' },
-        { field: 'description', condition: data.description && data.description.trim(), message: 'Description is required' },
-        { field: 'price', condition: !isNaN(data.price) && data.price >= 0, message: 'Valid price is required' },
-        { field: 'location', condition: data.location && data.location.trim(), message: 'Location is required' },
-        { field: 'property_type', condition: data.property_type, message: 'Property type is required' },
-        { field: 'bedrooms', condition: !isNaN(data.bedrooms) && data.bedrooms >= 0, message: 'Valid bedrooms count is required' },
-        { field: 'bathrooms', condition: !isNaN(data.bathrooms) && data.bathrooms >= 0, message: 'Valid bathrooms count is required' },
-    ];
+    // Reset all error messages dynamically ensuring visual cleanup
+    form.querySelectorAll('.field-error').forEach(el => el.classList.add('hidden'));
 
-    validations.forEach(validation => {
-        if (!validation.condition) {
-            showFieldError(form, validation.field, validation.message);
-            isValid = false;
+    const showError = (field, message) => {
+        const errorElement = form.querySelector(`[data-field="${field}"]`);
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.classList.remove('hidden');
         }
-    });
-
-    // Validate media URLs if any were entered
-    const invalidImages = (data.media || []).filter(m => !isValidUrl(m.url));
-    if (invalidImages.length > 0) {
-        showFieldError(form, 'media_images', `${invalidImages.length} invalid URL(s) detected — please fix highlighted entries in the preview.`);
         isValid = false;
-    }
+    };
+
+    if (!data.title || data.title.trim() === '') showError('title', 'Title is required');
+    if (!data.description || data.description.trim() === '') showError('description', 'Description is required');
+    if (isNaN(data.price) || data.price <= 0) showError('price', 'Please enter a valid positive price');
+    if (!data.location || data.location.trim() === '') showError('location', 'Location is required');
+    if (!data.property_type) showError('property_type', 'Property type is required');
+    if (isNaN(data.bedrooms) || data.bedrooms < 0) showError('bedrooms', 'Please enter a valid number of bedrooms');
+    if (isNaN(data.bathrooms) || data.bathrooms < 0) showError('bathrooms', 'Please enter a valid number of bathrooms');
 
     return isValid;
 }
+
 
 /**
  * Show field error
