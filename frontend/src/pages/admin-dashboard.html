@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - STAFIN Homes</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-gray-50 min-h-screen">
     <!-- Header -->
     <header class="bg-white shadow-sm border-b border-gray-200">
@@ -16,16 +18,11 @@
                     <span class="ml-4 text-gray-500">Admin Dashboard</span>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <button
-                        id="add-property-btn"
-                        class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition font-medium"
-                    >
+                    <button id="add-property-btn"
+                        class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition font-medium">
                         Add Property
                     </button>
-                    <button
-                        id="logout-btn"
-                        class="text-gray-600 hover:text-gray-900 transition font-medium"
-                    >
+                    <button id="logout-btn" class="text-gray-600 hover:text-gray-900 transition font-medium">
                         Logout
                     </button>
                 </div>
@@ -37,7 +34,9 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Loading State -->
         <div id="loading-state" class="text-center py-12">
-            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-indigo-200 border-t-indigo-600"></div>
+            <div
+                class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-indigo-200 border-t-indigo-600">
+            </div>
             <p class="text-gray-600 mt-4">Loading properties...</p>
         </div>
 
@@ -55,14 +54,13 @@
         <!-- Empty State -->
         <div id="empty-state" class="hidden text-center py-12">
             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
             <h3 class="mt-2 text-sm font-medium text-gray-900">No properties</h3>
             <p class="mt-1 text-sm text-gray-500">Get started by adding your first property.</p>
-            <button
-                id="empty-add-btn"
-                class="mt-6 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition font-medium"
-            >
+            <button id="empty-add-btn"
+                class="mt-6 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition font-medium">
                 Add Property
             </button>
         </div>
@@ -90,10 +88,11 @@
     </main>
 
     <script src="/src/js/api/auth.js"></script>
-    <script src="/src/js/api/propertyApi.js"></script>
+    <script src="/src/js/api/propertyApi.js?v=issue10_deletefix"></script>
     <script src="/src/js/components/propertyTable.js"></script>
-    <script src="/src/js/components/propertyForm.js"></script>
+    <script src="/src/js/components/propertyForm.js?v=issue10_3"></script>
     <script src="/src/js/components/toast.js"></script>
-    <script src="/src/js/pages/adminDashboard.js"></script>
+    <script src="/src/js/pages/adminDashboard.js?v=customModal1"></script>
 </body>
+
 </html>
