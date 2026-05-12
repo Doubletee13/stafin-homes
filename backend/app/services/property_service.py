@@ -1,8 +1,17 @@
 from fastapi import HTTPException
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.models.property import Property
 from app.schemas.property import PropertyCreate, PropertyUpdate
+
+# Whitelist of valid sort options to prevent SQL injection via order_by
+SORT_OPTIONS = {
+    "newest": Property.created_at.desc(),
+    "oldest": Property.created_at.asc(),
+    "price_asc": Property.price.asc(),
+    "price_desc": Property.price.desc(),
+}
 
 
 def create_property(db: Session, data: PropertyCreate) -> Property:
@@ -15,14 +24,22 @@ def create_property(db: Session, data: PropertyCreate) -> Property:
 
 def get_all_properties(
     db: Session,
+    # Existing filters (preserved)
     location: str = None,
     property_type: str = None,
     min_price: float = None,
     max_price: float = None,
     bedrooms: int = None,
-) -> list[Property]:
+    # New filters
+    keyword: str = None,
+    bathrooms: int = None,
+    sort: str = None,
+    skip: int = 0,
+    limit: int = 20,
+) -> dict:
     query = db.query(Property)
 
+    # --- Existing filters (unchanged) ---
     if location:
         query = query.filter(Property.location.ilike(f"%{location}%"))
     if property_type:
@@ -34,7 +51,34 @@ def get_all_properties(
     if bedrooms is not None:
         query = query.filter(Property.bedrooms == bedrooms)
 
-    return query.all()
+    # --- New filters ---
+    if keyword:
+        search_term = f"%{keyword}%"
+        query = query.filter(
+            or_(
+                Property.title.ilike(search_term),
+                Property.description.ilike(search_term),
+            )
+        )
+    if bathrooms is not None:
+        query = query.filter(Property.bathrooms >= bathrooms)
+
+    # --- Sorting ---
+    sort_clause = SORT_OPTIONS.get(sort, Property.created_at.desc())
+    query = query.order_by(sort_clause)
+
+    # --- Count before pagination (for pagination metadata) ---
+    total = query.count()
+
+    # --- Pagination ---
+    items = query.offset(skip).limit(limit).all()
+
+    return {
+        "items": items,
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+    }
 
 
 def get_property_by_id(db: Session, property_id: int) -> Property:

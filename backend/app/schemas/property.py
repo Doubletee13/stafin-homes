@@ -76,3 +76,11 @@ class PropertyResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class PropertyListResponse(BaseModel):
+    """Paginated list of properties returned by the API."""
+    items: List[PropertyResponse]
+    total: int
+    skip: int
+    limit: int
