@@ -1,29 +1,45 @@
 /**
- * Properties Page Logic (Controller Pattern)
- * Orchestrates property filtering, fetching, and rendering
- * Handles filter state, URL sync, debouncing, and error handling
+ * Properties Page Logic (Issue #13: Extended)
+ * Adds pagination, sorting, keyword search, and bathroom filtering
+ * while preserving all existing filter/URL sync behaviour.
  */
+
+const PROPERTIES_PER_PAGE = 12;
 
 class PropertiesPage {
     constructor() {
         this.filters = {
+            // Existing filters (preserved)
             location: null,
             property_type: null,
             min_price: null,
             max_price: null,
-            bedrooms: null
+            bedrooms: null,
+            // New filters (Issue #13)
+            keyword: null,
+            sort: 'newest',
+            bathrooms: null,
         };
-        
+
+        // Pagination state
+        this.page = 1;
+        this.totalPages = 1;
+        this.totalCount = 0;
+
+        // Abort controller to cancel in-flight requests on rapid filter changes
+        this._abortController = null;
+
         this.elements = {
             filterBarContainer: document.getElementById('filter-bar-container'),
             loadingState: document.getElementById('loading-state'),
             errorState: document.getElementById('error-state'),
             emptyState: document.getElementById('empty-state'),
             propertiesGrid: document.getElementById('properties-grid'),
+            paginationContainer: document.getElementById('pagination-container'),
             retryButton: null,
-            emptyMessage: null
+            emptyMessage: null,
         };
-        
+
         this.init();
     }
 
@@ -35,37 +51,43 @@ class PropertiesPage {
     }
 
     /**
-     * Read filter values from URL query parameters
+     * Read filter + pagination values from URL query parameters
      */
     readFiltersFromUrl() {
-        const urlParams = new URLSearchParams(window.location.search);
-        
+        const p = new URLSearchParams(window.location.search);
+
         this.filters = {
-            location: urlParams.get('location') || null,
-            property_type: urlParams.get('property_type') || null,
-            min_price: urlParams.get('min_price') ? parseFloat(urlParams.get('min_price')) : null,
-            max_price: urlParams.get('max_price') ? parseFloat(urlParams.get('max_price')) : null,
-            bedrooms: urlParams.get('bedrooms') ? parseInt(urlParams.get('bedrooms'), 10) : null
+            location: p.get('location') || null,
+            property_type: p.get('property_type') || null,
+            min_price: p.get('min_price') ? parseFloat(p.get('min_price')) : null,
+            max_price: p.get('max_price') ? parseFloat(p.get('max_price')) : null,
+            bedrooms: p.get('bedrooms') ? parseInt(p.get('bedrooms'), 10) : null,
+            keyword: p.get('keyword') || null,
+            sort: p.get('sort') || 'newest',
+            bathrooms: p.get('bathrooms') ? parseInt(p.get('bathrooms'), 10) : null,
         };
+
+        this.page = p.get('page') ? parseInt(p.get('page'), 10) : 1;
     }
 
     /**
-     * Update URL with current filter values (without reload)
+     * Write current filter + pagination state to URL (no reload)
      */
     updateUrlWithFilters() {
         const url = new URL(window.location);
-        
-        // Clear existing search params
         url.search = '';
-        
-        // Add non-null filters to URL
-        if (this.filters.location) url.searchParams.set('location', this.filters.location);
-        if (this.filters.property_type) url.searchParams.set('property_type', this.filters.property_type);
-        if (this.filters.min_price) url.searchParams.set('min_price', this.filters.min_price);
-        if (this.filters.max_price) url.searchParams.set('max_price', this.filters.max_price);
-        if (this.filters.bedrooms) url.searchParams.set('bedrooms', this.filters.bedrooms);
-        
-        // Update URL without reloading
+
+        const f = this.filters;
+        if (f.location) url.searchParams.set('location', f.location);
+        if (f.property_type) url.searchParams.set('property_type', f.property_type);
+        if (f.min_price) url.searchParams.set('min_price', f.min_price);
+        if (f.max_price) url.searchParams.set('max_price', f.max_price);
+        if (f.bedrooms) url.searchParams.set('bedrooms', f.bedrooms);
+        if (f.keyword) url.searchParams.set('keyword', f.keyword);
+        if (f.sort && f.sort !== 'newest') url.searchParams.set('sort', f.sort);
+        if (f.bathrooms) url.searchParams.set('bathrooms', f.bathrooms);
+        if (this.page > 1) url.searchParams.set('page', this.page);
+
         window.history.pushState({}, '', url.toString());
     }
 
@@ -74,7 +96,6 @@ class PropertiesPage {
      */
     renderFilterBar() {
         if (!this.elements.filterBarContainer) return;
-        
         this.elements.filterBarContainer.innerHTML = '';
         const filterBar = renderFilterBar(this.filters, (newFilters) => {
             this.handleFilterChange(newFilters);
@@ -83,41 +104,67 @@ class PropertiesPage {
     }
 
     /**
-     * Handle filter changes
+     * Handle filter changes — resets to page 1
      */
     handleFilterChange(newFilters) {
-        this.filters = newFilters;
+        this.filters = { sort: 'newest', ...newFilters };
+        this.page = 1; // Reset to first page on any filter change
         this.updateUrlWithFilters();
         this.loadProperties();
     }
 
     /**
-     * Setup retry button handler
+     * Handle page change from pagination bar
+     */
+    handlePageChange(newPage) {
+        this.page = newPage;
+        this.updateUrlWithFilters();
+        this.loadProperties();
+        // Scroll back to top of listing
+        this.elements.filterBarContainer?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+
+    /**
+     * Setup retry button handler on error state
      */
     setupRetryHandler() {
         this.elements.retryButton = this.elements.errorState?.querySelector('.retry-button');
         this.elements.emptyMessage = this.elements.emptyState?.querySelector('.empty-message');
-        
+
         if (this.elements.retryButton) {
-            this.elements.retryButton.addEventListener('click', () => {
-                this.loadProperties();
-            });
+            this.elements.retryButton.addEventListener('click', () => this.loadProperties());
         }
     }
 
     /**
-     * Show specific UX state with accessibility support
+     * Show skeleton loaders in the grid during fetch
+     */
+    showSkeletons() {
+        const { propertiesGrid, loadingState, errorState, emptyState, paginationContainer } = this.elements;
+
+        loadingState?.classList.add('hidden');
+        errorState?.classList.add('hidden');
+        emptyState?.classList.add('hidden');
+        if (paginationContainer) paginationContainer.innerHTML = '';
+
+        if (propertiesGrid) {
+            propertiesGrid.classList.remove('hidden');
+            propertiesGrid.innerHTML = '';
+            propertiesGrid.appendChild(renderSkeletonGrid(PROPERTIES_PER_PAGE));
+        }
+    }
+
+    /**
+     * Show specific UX state
      */
     showState(state, customMessage = null) {
         const { loadingState, errorState, emptyState, propertiesGrid } = this.elements;
 
-        // Hide all states first
         loadingState?.classList.add('hidden');
         errorState?.classList.add('hidden');
         emptyState?.classList.add('hidden');
         propertiesGrid?.classList.add('hidden');
 
-        // Show requested state
         switch (state) {
             case 'loading':
                 loadingState?.classList.remove('hidden');
@@ -125,12 +172,9 @@ class PropertiesPage {
             case 'error':
                 errorState?.classList.remove('hidden');
                 if (customMessage) {
-                    const errorMessageElement = errorState?.querySelector('.error-message');
-                    if (errorMessageElement) {
-                        errorMessageElement.textContent = customMessage;
-                    }
+                    const el = errorState?.querySelector('.error-message');
+                    if (el) el.textContent = customMessage;
                 }
-                // Move focus to error for accessibility
                 errorState?.focus();
                 break;
             case 'empty':
@@ -146,10 +190,13 @@ class PropertiesPage {
     }
 
     /**
-     * Handle structured errors
+     * Handle structured API errors
      */
     handleError(error) {
         console.error('Failed to load properties:', error);
+        if (this.elements.paginationContainer) {
+            this.elements.paginationContainer.innerHTML = '';
+        }
 
         switch (error.type) {
             case 'TIMEOUT':
@@ -169,47 +216,68 @@ class PropertiesPage {
         }
     }
 
-    /**
-     * Check if any filters are active
-     */
     hasActiveFilters() {
-        return Object.values(this.filters).some(value => value !== null);
+        const f = this.filters;
+        return !!(f.location || f.property_type || f.min_price || f.max_price ||
+            f.bedrooms || f.keyword || f.bathrooms || (f.sort && f.sort !== 'newest'));
     }
 
     /**
-     * Load and display properties with current filters
+     * Load and display properties with current filters + pagination
      */
     async loadProperties() {
-        this.showState('loading');
+        // Cancel any in-flight request
+        if (this._abortController) {
+            this._abortController.abort();
+        }
+        this._abortController = new AbortController();
+
+        // Show skeleton grid while fetching
+        this.showSkeletons();
 
         try {
-            // Build API filter object (remove null values)
+            const skip = (this.page - 1) * PROPERTIES_PER_PAGE;
+
+            // Build API filter object
             const apiFilters = {};
-            if (this.filters.location) apiFilters.location = this.filters.location;
-            if (this.filters.property_type) apiFilters.property_type = this.filters.property_type;
-            if (this.filters.min_price) apiFilters.min_price = this.filters.min_price;
-            if (this.filters.max_price) apiFilters.max_price = this.filters.max_price;
-            if (this.filters.bedrooms) apiFilters.bedrooms = this.filters.bedrooms;
+            const f = this.filters;
+            if (f.location) apiFilters.location = f.location;
+            if (f.property_type) apiFilters.property_type = f.property_type;
+            if (f.min_price) apiFilters.min_price = f.min_price;
+            if (f.max_price) apiFilters.max_price = f.max_price;
+            if (f.bedrooms) apiFilters.bedrooms = f.bedrooms;
+            if (f.keyword) apiFilters.keyword = f.keyword;
+            if (f.sort) apiFilters.sort = f.sort;
+            if (f.bathrooms) apiFilters.bathrooms = f.bathrooms;
+            apiFilters.skip = skip;
+            apiFilters.limit = PROPERTIES_PER_PAGE;
 
-            const properties = await getProperties(apiFilters);
+            const response = await getProperties(apiFilters);
 
-            // Check if properties array is empty
+            // Handle new paginated response shape {items, total, skip, limit}
+            const properties = response?.items ?? response;
+            const total = response?.total ?? properties.length;
+
+            this.totalCount = total;
+            this.totalPages = Math.max(1, Math.ceil(total / PROPERTIES_PER_PAGE));
+
             if (!properties || properties.length === 0) {
+                this.elements.propertiesGrid && (this.elements.propertiesGrid.innerHTML = '');
                 if (this.hasActiveFilters()) {
                     this.showState('empty', 'No properties match your current filters. Try adjusting your search criteria.');
                 } else {
                     this.showState('empty', 'There are currently no properties listed. Please check back later.');
                 }
+                if (this.elements.paginationContainer) {
+                    this.elements.paginationContainer.innerHTML = '';
+                }
                 return;
             }
 
-            // Render properties
+            // Render property cards
             this.showState('success');
-            
             if (this.elements.propertiesGrid) {
                 this.elements.propertiesGrid.innerHTML = '';
-
-                // Use DocumentFragment for batch DOM insertion
                 const fragment = document.createDocumentFragment();
                 properties.forEach(property => {
                     const card = renderPropertyCard(property);
@@ -217,13 +285,28 @@ class PropertiesPage {
                 });
                 this.elements.propertiesGrid.appendChild(fragment);
             }
+
+            // Render pagination bar
+            if (this.elements.paginationContainer) {
+                this.elements.paginationContainer.innerHTML = '';
+                const paginationBar = renderPaginationBar({
+                    currentPage: this.page,
+                    totalPages: this.totalPages,
+                    onPageChange: (p) => this.handlePageChange(p),
+                });
+                if (paginationBar) {
+                    this.elements.paginationContainer.appendChild(paginationBar);
+                }
+            }
+
         } catch (error) {
+            if (error.name === 'AbortError') return; // Cancelled — ignore
             this.handleError(error);
         }
     }
 }
 
 // Initialize on DOM ready
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     new PropertiesPage();
 });

@@ -40,6 +40,20 @@ async function fetchWithTimeout(url, options = {}) {
 }
 
 /**
+ * Inspect a response and throw an AUTH_ERROR for 401 Unauthorized responses.
+ * This prevents the raw backend JWT error message from reaching the user.
+ * @param {Response} response
+ */
+function throwIfAuthError(response) {
+    if (response.status === 401) {
+        const error = new Error('Your session has expired. Please log in again.');
+        error.type = 'AUTH_ERROR';
+        error.statusCode = 401;
+        throw error;
+    }
+}
+
+/**
  * Fetch all properties from the API with optional filters
  * @param {Object} filters - Filter parameters
  * @param {string} filters.location - Location filter
@@ -53,12 +67,18 @@ async function fetchWithTimeout(url, options = {}) {
 async function getProperties(filters = {}) {
     const url = new URL(`${API_BASE_URL}/properties/`);
 
-    // Add query parameters for filters
+    // Existing filters (preserved)
     if (filters.location) url.searchParams.append('location', filters.location);
     if (filters.property_type) url.searchParams.append('property_type', filters.property_type);
     if (filters.min_price) url.searchParams.append('min_price', filters.min_price);
     if (filters.max_price) url.searchParams.append('max_price', filters.max_price);
     if (filters.bedrooms) url.searchParams.append('bedrooms', filters.bedrooms);
+    // New filters (Issue #13)
+    if (filters.keyword) url.searchParams.append('keyword', filters.keyword);
+    if (filters.bathrooms) url.searchParams.append('bathrooms', filters.bathrooms);
+    if (filters.sort) url.searchParams.append('sort', filters.sort);
+    if (filters.skip !== undefined) url.searchParams.append('skip', filters.skip);
+    if (filters.limit !== undefined) url.searchParams.append('limit', filters.limit);
 
     try {
         const response = await fetchWithTimeout(url.toString(), {
@@ -77,16 +97,22 @@ async function getProperties(filters = {}) {
 
         const data = await response.json();
 
-        // Handle empty response
-        if (!data || !Array.isArray(data)) {
-            console.warn('API returned non-array data:', data);
-            return [];
+        // Support paginated response shape { items, total, skip, limit }
+        // as well as legacy bare array format for backward compatibility
+        if (data && typeof data === 'object' && Array.isArray(data.items)) {
+            return data; // Paginated response
         }
 
-        return data;
+        if (Array.isArray(data)) {
+            // Legacy bare array — wrap into paginated shape for consistency
+            return { items: data, total: data.length, skip: 0, limit: data.length };
+        }
+
+        console.warn('API returned unexpected data shape:', data);
+        return { items: [], total: 0, skip: 0, limit: 20 };
+
     } catch (error) {
         if (error.type) {
-            // Already a structured error, re-throw
             throw error;
         }
 
@@ -216,16 +242,17 @@ async function createProperty(propertyData) {
             body: JSON.stringify(propertyData),
         });
 
-        if (response.status === 401) {
-            localStorage.removeItem('stafin_admin_token');
-            window.location.href = '/admin-login.html';
-            const error = new Error('Session expired');
-            error.type = 'AUTH_ERROR';
-            throw error;
-        }
+        throwIfAuthError(response);
 
         if (!response.ok) {
-            const error = new Error(`API request failed with status ${response.status}`);
+            let errorMsg = `API request failed with status ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMsg = errorData.detail || errorData.message || errorMsg;
+            } catch (e) {
+                // Ignore parse errors
+            }
+            const error = new Error(errorMsg);
             error.type = 'API_ERROR';
             error.statusCode = response.status;
             throw error;
@@ -296,16 +323,17 @@ async function updateProperty(id, propertyData) {
             body: JSON.stringify(propertyData),
         });
 
-        if (response.status === 401) {
-            localStorage.removeItem('stafin_admin_token');
-            window.location.href = '/admin-login.html';
-            const error = new Error('Session expired');
-            error.type = 'AUTH_ERROR';
-            throw error;
-        }
+        throwIfAuthError(response);
 
         if (!response.ok) {
-            const error = new Error(`API request failed with status ${response.status}`);
+            let errorMsg = `API request failed with status ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMsg = errorData.detail || errorData.message || errorMsg;
+            } catch (e) {
+                // Ignore parse errors
+            }
+            const error = new Error(errorMsg);
             error.type = 'API_ERROR';
             error.statusCode = response.status;
             throw error;
@@ -374,16 +402,17 @@ async function deleteProperty(id) {
             },
         });
 
-        if (response.status === 401) {
-            localStorage.removeItem('stafin_admin_token');
-            window.location.href = '/admin-login.html';
-            const error = new Error('Session expired');
-            error.type = 'AUTH_ERROR';
-            throw error;
-        }
+        throwIfAuthError(response);
 
         if (!response.ok) {
-            const error = new Error(`API request failed with status ${response.status}`);
+            let errorMsg = `API request failed with status ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMsg = errorData.detail || errorData.message || errorMsg;
+            } catch (e) {
+                // Ignore parse errors
+            }
+            const error = new Error(errorMsg);
             error.type = 'API_ERROR';
             error.statusCode = response.status;
             throw error;
