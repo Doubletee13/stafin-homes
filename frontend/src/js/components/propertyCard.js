@@ -65,7 +65,7 @@ function renderPropertyCard(property) {
     const mediaList = property.media && property.media.length > 0
         ? property.media
         : (property.image_urls || []).map(url => ({ type: 'image', url }));
-    const firstImage = mediaList.find(m => m.type === 'image');
+    const firstImage = mediaList.find(m => m.featured && m.type === 'image') || mediaList.find(m => m.type === 'image');
     const imageUrl = firstImage
         ? firstImage.url
         : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&auto=format&fit=crop&q=60';
