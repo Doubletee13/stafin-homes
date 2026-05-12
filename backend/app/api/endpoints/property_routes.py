@@ -1,12 +1,12 @@
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_admin
 from app.core.database import get_db
 from app.models.admin import Admin
-from app.schemas.property import PropertyCreate, PropertyUpdate, PropertyResponse
+from app.schemas.property import PropertyCreate, PropertyUpdate, PropertyResponse, PropertyListResponse
 from app.services import property_service
 
 router = APIRouter(prefix="/properties", tags=["properties"])
@@ -21,13 +21,20 @@ def create(
     return property_service.create_property(db, data)
 
 
-@router.get("/", response_model=List[PropertyResponse])
+@router.get("/", response_model=PropertyListResponse)
 def get_all(
+    # Existing filters (preserved, backward-compatible)
     location: str = None,
     property_type: str = None,
     min_price: float = None,
     max_price: float = None,
     bedrooms: int = None,
+    # New filters (Issue #13)
+    keyword: str = Query(None, description="Search title and description"),
+    bathrooms: int = Query(None, ge=0, description="Minimum bathrooms"),
+    sort: str = Query(None, description="Sort order: newest, oldest, price_asc, price_desc"),
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(20, ge=1, le=100, description="Maximum records to return"),
     db: Session = Depends(get_db),
 ):
     return property_service.get_all_properties(
@@ -37,6 +44,11 @@ def get_all(
         min_price=min_price,
         max_price=max_price,
         bedrooms=bedrooms,
+        keyword=keyword,
+        bathrooms=bathrooms,
+        sort=sort,
+        skip=skip,
+        limit=limit,
     )
 
 
