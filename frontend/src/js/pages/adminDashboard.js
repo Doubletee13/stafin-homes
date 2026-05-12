@@ -63,7 +63,8 @@ class AdminDashboard {
         this.setState('loading');
 
         try {
-            this.properties = await getProperties();
+            const response = await getProperties({ limit: 100 });
+            this.properties = response?.items ?? response;
             this.renderProperties();
             this.setState('success');
         } catch (error) {
