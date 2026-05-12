@@ -8,6 +8,7 @@ class MediaItem(BaseModel):
     """Represents a single media item (image or video)."""
     type: Literal["image", "video"]
     url: str = Field(..., min_length=1)
+    featured: Optional[bool] = False
 
     @field_validator("url")
     @classmethod

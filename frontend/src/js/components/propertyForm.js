@@ -42,31 +42,41 @@ function buildMediaPreviewHtml(media) {
         }
 
         const isValid = isValidUrl(item.url);
-        const borderClass = isValid ? 'border-gray-200' : 'border-red-300 bg-red-50';
+        const borderClass = item.featured ? 'border-2 border-yellow-400' : (isValid ? 'border-gray-200 border' : 'border-red-300 bg-red-50 border');
         const badgeClass = item.type === 'video'
             ? 'bg-purple-100 text-purple-700'
             : 'bg-blue-100 text-blue-700';
 
         if (!isValid) {
             return `
-                <div class="flex items-center gap-2 p-2 border rounded-lg ${borderClass} h-28">
+                <div class="flex items-center gap-2 p-2 rounded-lg ${borderClass} h-28">
                     <span class="text-red-500 text-xs">⚠ Invalid URL</span>
                     <button class="delete-media-btn ml-auto bg-red-500 text-white rounded p-1" data-index="${i}" type="button">Del</button>
                 </div>
             `;
         }
 
+        const starColor = item.featured ? 'text-yellow-400 fill-current' : 'text-gray-300 fill-transparent hover:text-yellow-400 transition-colors';
+
+        // Set draggable natively
         return `
-            <div class="relative border rounded-lg overflow-hidden ${borderClass} group h-28 bg-black">
-                <span class="absolute top-1 left-1 z-10 text-xs px-2 py-0.5 rounded-full font-medium ${badgeClass} shadow-sm backdrop-blur-md bg-opacity-90">
-                    ${item.type === 'video' ? 'Video' : 'Image'}
+            <div data-index="${i}" draggable="true" class="media-preview-item relative rounded-lg overflow-hidden ${borderClass} group h-28 bg-black cursor-move">
+                <span class="absolute bottom-1 right-1 z-10 text-xs px-2 py-0.5 rounded-full font-medium ${badgeClass} shadow-sm backdrop-blur-md bg-opacity-90">
+                    ${item.type === 'video' ? '📹 Video' : '🖼️ Image'}
                 </span>
+                
+                <button data-index="${i}" class="feature-media-btn absolute top-1 left-1 z-10 p-1 shadow-sm focus:outline-none" type="button" title="Set as Featured">
+                    <svg class="w-5 h-5 ${starColor}" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                    </svg>
+                </button>
+
                 <button data-index="${i}" class="delete-media-btn absolute top-1 right-1 z-10 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 shadow-sm hover:bg-red-600" type="button" title="Remove">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
                 ${item.type === 'image'
-                ? `<img src="${item.url}" alt="Preview ${i + 1}" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" onerror="this.src=''; this.alt='Load error';">`
-                : `<video src="${item.url}" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" muted preload="metadata"></video>`
+                ? `<img src="${item.url}" alt="Preview ${i + 1}" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity pointer-events-none" draggable="false" onerror="this.src=''; this.alt='Load error';">`
+                : `<video src="${item.url}" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity pointer-events-none" muted preload="metadata"></video>`
             }
             </div>
         `;
@@ -240,19 +250,27 @@ function renderPropertyForm(property, onSubmit, onCancel) {
             errorElement.classList.add('hidden');
         }
 
-        // Attach event listeners to newly rendered delete buttons
+        // Attach delete listeners
         const delBtns = previewContainer.querySelectorAll('.delete-media-btn');
         delBtns.forEach(btn => {
             btn.onclick = async () => {
                 const index = parseInt(btn.getAttribute('data-index'), 10);
                 const item = currentMedia[index];
 
+                // Check if they deleted the featured so we can assign a new native one next render
+                const wasFeatured = item.featured;
+
                 // Optimistically remove from UI
                 currentMedia.splice(index, 1);
+
+                // If it was featured, make the new first item featured safely if available
+                if (wasFeatured && currentMedia.length > 0) {
+                    currentMedia[0].featured = true;
+                }
+
                 renderPreview();
 
-                // If it is stored in Cloudinary via this session or previously, attempt to permanently delete 
-                // to prevent orphaned cloud states. Public_id exists if newly uploaded. 
+                // Permanently delete in background
                 if (item && item.public_id) {
                     try {
                         const token = localStorage.getItem('stafin_admin_token');
@@ -265,6 +283,59 @@ function renderPropertyForm(property, onSubmit, onCancel) {
                     }
                 }
             };
+        });
+
+        // Attach feature star listeners
+        const featBtns = previewContainer.querySelectorAll('.feature-media-btn');
+        featBtns.forEach(btn => {
+            btn.onclick = () => {
+                const index = parseInt(btn.getAttribute('data-index'), 10);
+                if (currentMedia[index].uploading) return; // Prevent setting placeholder as featured
+
+                // Unset all and set current
+                currentMedia.forEach((m, i) => { m.featured = (i === index); });
+                renderPreview();
+            };
+        });
+
+        // Attach Drag-and-Drop Reordering listeners
+        let dragStartIndex = null;
+        const dragItems = previewContainer.querySelectorAll('.media-preview-item');
+
+        dragItems.forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                dragStartIndex = parseInt(e.currentTarget.getAttribute('data-index'), 10);
+                e.dataTransfer.effectAllowed = 'move';
+                e.currentTarget.classList.add('opacity-50'); // visual cue
+            });
+
+            item.addEventListener('dragend', (e) => {
+                e.currentTarget.classList.remove('opacity-50');
+                dragItems.forEach(i => i.classList.remove('border-t-4', 'border-indigo-500'));
+            });
+
+            item.addEventListener('dragover', (e) => {
+                e.preventDefault(); // Necessary to allow dropping
+                e.dataTransfer.dropEffect = 'move';
+                e.currentTarget.classList.add('border-t-4', 'border-indigo-500'); // hover indicator
+            });
+
+            item.addEventListener('dragleave', (e) => {
+                e.currentTarget.classList.remove('border-t-4', 'border-indigo-500');
+            });
+
+            item.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.currentTarget.classList.remove('border-t-4', 'border-indigo-500');
+                const dropIndex = parseInt(e.currentTarget.getAttribute('data-index'), 10);
+
+                if (dragStartIndex !== null && dragStartIndex !== dropIndex) {
+                    // Extract item and splice it back to reorder array safely
+                    const draggedItem = currentMedia.splice(dragStartIndex, 1)[0];
+                    currentMedia.splice(dropIndex, 0, draggedItem);
+                    renderPreview();
+                }
+            });
         });
     }
 
@@ -293,11 +364,31 @@ function renderPropertyForm(property, onSubmit, onCancel) {
                 continue; // Skip this file
             }
 
+            // --- Duplicate prevention ---
+            const isDuplicate = currentMedia.some(m => m.filename === file.name && m.size === file.size);
+            if (isDuplicate) {
+                const formError = form.querySelector('#form-error');
+                formError.textContent = `"${file.name}" has already been uploaded.`;
+                formError.classList.remove('hidden');
+                setTimeout(() => formError.classList.add('hidden'), 5000);
+                continue; // Skip this duplicate
+            }
+
             const mediaType = ALLOWED_VIDEO_TYPES.includes(file.type) ? 'video' : 'image';
             const tempId = Date.now() + i.toString();
 
-            // Add placeholder instantly showing it as uploading
-            currentMedia.push({ type: mediaType, url: '', uploading: true, tempId });
+            // Add placeholder instantly showing it as uploading (track filename/size for deduping)
+            // Auto-feature the first item pushed
+            const isFirst = currentMedia.length === 0;
+            currentMedia.push({
+                type: mediaType,
+                url: '',
+                uploading: true,
+                tempId,
+                filename: file.name,
+                size: file.size,
+                featured: isFirst
+            });
             renderPreview();
 
 
@@ -319,10 +410,15 @@ function renderPropertyForm(property, onSubmit, onCancel) {
 
                 const data = await res.json();
 
-                // Find and replace the temporary item with real secure_url payload
+                // Find and merge into the temporary item to preserve local client state (filename, size, featured)
                 const idx = currentMedia.findIndex(m => m.tempId === tempId);
                 if (idx > -1) {
-                    currentMedia[idx] = data; // {type, url, public_id}
+                    currentMedia[idx] = {
+                        ...currentMedia[idx],
+                        url: data.url,
+                        public_id: data.public_id,
+                        uploading: false
+                    };
                 }
             } catch (err) {
                 // Wipe the invalid temp upload if error happens
@@ -433,7 +529,7 @@ function getFormData(form, mediaArray) {
         bedrooms: parseInt(formData.get('bedrooms'), 10),
         bathrooms: parseInt(formData.get('bathrooms'), 10),
         // Expose only unified payload standards ensuring back-compat preservation
-        media: mediaArray.map(m => ({ type: m.type, url: m.url }))
+        media: mediaArray.map(m => ({ type: m.type, url: m.url, featured: !!m.featured }))
     };
 }
 

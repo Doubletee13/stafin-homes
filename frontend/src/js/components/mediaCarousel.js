@@ -11,7 +11,10 @@
 const FALLBACK_IMAGE_URL = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200&auto=format&fit=crop&q=60';
 
 function createMediaCarousel(media, propertyTitle) {
-    const validMedia = Array.isArray(media) ? media.filter(m => m && m.url) : [];
+    let validMedia = Array.isArray(media) ? media.filter(m => m && m.url) : [];
+
+    // Sort so the featured item always initializes as the primary slide
+    validMedia.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
 
     const wrapper = document.createElement('div');
     wrapper.className = 'media-carousel relative h-96 overflow-hidden bg-gray-900 select-none';

@@ -52,14 +52,14 @@ async function fetchWithTimeout(url, options = {}) {
  */
 async function getProperties(filters = {}) {
     const url = new URL(`${API_BASE_URL}/properties/`);
-    
+
     // Add query parameters for filters
     if (filters.location) url.searchParams.append('location', filters.location);
     if (filters.property_type) url.searchParams.append('property_type', filters.property_type);
     if (filters.min_price) url.searchParams.append('min_price', filters.min_price);
     if (filters.max_price) url.searchParams.append('max_price', filters.max_price);
     if (filters.bedrooms) url.searchParams.append('bedrooms', filters.bedrooms);
-    
+
     try {
         const response = await fetchWithTimeout(url.toString(), {
             method: 'GET',
@@ -76,7 +76,7 @@ async function getProperties(filters = {}) {
         }
 
         const data = await response.json();
-        
+
         // Handle empty response
         if (!data || !Array.isArray(data)) {
             console.warn('API returned non-array data:', data);
@@ -89,7 +89,7 @@ async function getProperties(filters = {}) {
             // Already a structured error, re-throw
             throw error;
         }
-        
+
         if (error instanceof SyntaxError) {
             console.error('Invalid JSON response from API:', error);
             const structuredError = new Error('Invalid response from server');
@@ -120,8 +120,8 @@ async function getProperties(filters = {}) {
  * @throws {Error} Structured error with type property
  */
 async function getPropertyById(id) {
-    const url = `${API_BASE_URL}/properties/${id}/`;
-    
+    const url = `${API_BASE_URL}/properties/${id}`;
+
     try {
         const response = await fetchWithTimeout(url, {
             method: 'GET',
@@ -144,7 +144,7 @@ async function getPropertyById(id) {
         }
 
         const data = await response.json();
-        
+
         if (!data) {
             const error = new Error('Invalid response from server');
             error.type = 'INVALID_RESPONSE';
@@ -157,7 +157,7 @@ async function getPropertyById(id) {
             // Already a structured error, re-throw
             throw error;
         }
-        
+
         if (error instanceof SyntaxError) {
             console.error('Invalid JSON response from API:', error);
             const structuredError = new Error('Invalid response from server');
@@ -197,7 +197,7 @@ async function getPropertyById(id) {
  */
 async function createProperty(propertyData) {
     const token = localStorage.getItem('stafin_admin_token');
-    
+
     if (!token) {
         const error = new Error('Not authenticated');
         error.type = 'AUTH_ERROR';
@@ -205,7 +205,7 @@ async function createProperty(propertyData) {
     }
 
     const url = `${API_BASE_URL}/properties/`;
-    
+
     try {
         const response = await fetchWithTimeout(url, {
             method: 'POST',
@@ -232,7 +232,7 @@ async function createProperty(propertyData) {
         }
 
         const data = await response.json();
-        
+
         if (!data) {
             const error = new Error('Invalid response from server');
             error.type = 'INVALID_RESPONSE';
@@ -244,7 +244,7 @@ async function createProperty(propertyData) {
         if (error.type) {
             throw error;
         }
-        
+
         if (error instanceof SyntaxError) {
             console.error('Invalid JSON response from API:', error);
             const structuredError = new Error('Invalid response from server');
@@ -277,15 +277,15 @@ async function createProperty(propertyData) {
  */
 async function updateProperty(id, propertyData) {
     const token = localStorage.getItem('stafin_admin_token');
-    
+
     if (!token) {
         const error = new Error('Not authenticated');
         error.type = 'AUTH_ERROR';
         throw error;
     }
 
-    const url = `${API_BASE_URL}/properties/${id}/`;
-    
+    const url = `${API_BASE_URL}/properties/${id}`;
+
     try {
         const response = await fetchWithTimeout(url, {
             method: 'PUT',
@@ -312,7 +312,7 @@ async function updateProperty(id, propertyData) {
         }
 
         const data = await response.json();
-        
+
         if (!data) {
             const error = new Error('Invalid response from server');
             error.type = 'INVALID_RESPONSE';
@@ -324,7 +324,7 @@ async function updateProperty(id, propertyData) {
         if (error.type) {
             throw error;
         }
-        
+
         if (error instanceof SyntaxError) {
             console.error('Invalid JSON response from API:', error);
             const structuredError = new Error('Invalid response from server');
@@ -356,15 +356,15 @@ async function updateProperty(id, propertyData) {
  */
 async function deleteProperty(id) {
     const token = localStorage.getItem('stafin_admin_token');
-    
+
     if (!token) {
         const error = new Error('Not authenticated');
         error.type = 'AUTH_ERROR';
         throw error;
     }
 
-    const url = `${API_BASE_URL}/properties/${id}/`;
-    
+    const url = `${API_BASE_URL}/properties/${id}`;
+
     try {
         const response = await fetchWithTimeout(url, {
             method: 'DELETE',
@@ -392,7 +392,7 @@ async function deleteProperty(id) {
         if (error.type) {
             throw error;
         }
-        
+
         if (error.name === 'AbortError') {
             const structuredError = new Error('Request timed out');
             structuredError.type = 'TIMEOUT';
