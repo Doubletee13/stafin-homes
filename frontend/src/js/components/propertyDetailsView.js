@@ -175,6 +175,13 @@ function renderPropertyDetails(property) {
         carouselSlot.insertBefore(carousel, carouselSlot.firstChild);
     }
 
+    // ── Inject Inquiry Form ──────────────────────────────────────────────
+    const infoSection = container.querySelector('.p-8');
+    if (infoSection && typeof createInquiryForm === 'function') {
+        const contactForm = createInquiryForm(property.id);
+        infoSection.appendChild(contactForm);
+    }
+
     return container;
 }
 
