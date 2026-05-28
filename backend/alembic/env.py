@@ -8,6 +8,7 @@ from alembic import context
 from app.models.base import Base  # noqa: F401
 # Import all models here as they are created:
 from app.models.property import Property  # noqa: F401
+from app.models.contact import Contact  # noqa: F401
 
 # Alembic Config object
 config = context.config
