@@ -43,7 +43,7 @@
         <!-- Error State -->
         <div id="error-state" class="hidden">
             <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-6 rounded-lg">
-                <p class="font-medium">Error loading properties</p>
+                <p id="error-title" class="font-medium">Error occurred</p>
                 <p id="error-message" class="mt-1"></p>
                 <button id="retry-btn" class="mt-4 text-red-700 underline hover:text-red-900">
                     Try again
@@ -65,14 +65,40 @@
             </button>
         </div>
 
+        <!-- Navigation Tabs -->
+        <div class="mb-8 border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                <button id="tab-properties"
+                    class="border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer">
+                    Properties
+                </button>
+                <button id="tab-inquiries"
+                    class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer">
+                    Inquiries
+                </button>
+            </nav>
+        </div>
+
         <!-- Property List -->
-        <div id="property-list" class="hidden">
+        <div id="property-section" class="">
             <div class="bg-white shadow rounded-lg">
                 <div class="px-6 py-4 border-b border-gray-200">
                     <h2 class="text-lg font-medium text-gray-900">Properties</h2>
                 </div>
                 <div id="table-container" class="p-6">
                     <!-- Property table will be rendered here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Inquiries List -->
+        <div id="inquiry-section" class="hidden">
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-medium text-gray-900">Latest Leads / Inquiries</h2>
+                </div>
+                <div id="inquiry-table-container" class="p-6">
+                    <!-- Inquiry table will be rendered here -->
                 </div>
             </div>
         </div>
@@ -89,10 +115,12 @@
 
     <script src="/src/js/api/auth.js"></script>
     <script src="/src/js/api/propertyApi.js?v=issue10_deletefix"></script>
+    <script src="/src/js/api/contactApi.js?v=issue11"></script>
     <script src="/src/js/components/propertyTable.js"></script>
+    <script src="/src/js/components/inquiryTable.js?v=issue11"></script>
     <script src="/src/js/components/propertyForm.js?v=issue10_3"></script>
     <script src="/src/js/components/toast.js"></script>
-    <script src="/src/js/pages/adminDashboard.js?v=customModal1"></script>
+    <script src="/src/js/pages/adminDashboard.js?v=issue11_crm"></script>
 </body>
 
 </html>

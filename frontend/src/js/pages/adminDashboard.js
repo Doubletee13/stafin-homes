@@ -6,18 +6,33 @@
 class AdminDashboard {
     constructor() {
         this.properties = [];
+        this.inquiries = [];
         this.currentProperty = null;
         this.isEditMode = false;
+        this.currentTab = 'properties'; // 'properties' | 'inquiries'
 
         this.elements = {
             loadingState: document.getElementById('loading-state'),
             errorState: document.getElementById('error-state'),
+            errorTitle: document.getElementById('error-title'),
             errorMessage: document.getElementById('error-message'),
             retryButton: document.getElementById('retry-btn'),
             emptyState: document.getElementById('empty-state'),
             emptyAddButton: document.getElementById('empty-add-btn'),
-            propertyList: document.getElementById('property-list'),
+
+            // Sections
+            propertySection: document.getElementById('property-section'),
+            inquirySection: document.getElementById('inquiry-section'),
+
+            // Containers
             tableContainer: document.getElementById('table-container'),
+            inquiryTableContainer: document.getElementById('inquiry-table-container'),
+
+            // Tabs
+            tabProperties: document.getElementById('tab-properties'),
+            tabInquiries: document.getElementById('tab-inquiries'),
+
+            // Controls
             addPropertyButton: document.getElementById('add-property-btn'),
             logoutButton: document.getElementById('logout-btn'),
             formModal: document.getElementById('form-modal'),
@@ -35,14 +50,18 @@ class AdminDashboard {
         }
 
         this.setupEventListeners();
-        this.loadProperties();
+        this.loadData();
     }
 
     setupEventListeners() {
         this.elements.addPropertyButton.addEventListener('click', () => this.openForm());
         this.elements.emptyAddButton.addEventListener('click', () => this.openForm());
-        this.elements.retryButton.addEventListener('click', () => this.loadProperties());
+        this.elements.retryButton.addEventListener('click', () => this.loadData());
         this.elements.logoutButton.addEventListener('click', () => this.handleLogout());
+
+        // Tab events
+        this.elements.tabProperties.addEventListener('click', () => this.switchTab('properties'));
+        this.elements.tabInquiries.addEventListener('click', () => this.switchTab('inquiries'));
 
         // Close modal on background click
         this.elements.formModal.addEventListener('click', (e) => {
@@ -59,6 +78,41 @@ class AdminDashboard {
         });
     }
 
+    async loadData() {
+        if (this.currentTab === 'properties') {
+            await this.loadProperties();
+        } else {
+            await this.loadInquiries();
+        }
+    }
+
+    async switchTab(tab) {
+        if (this.currentTab === tab) return;
+
+        this.currentTab = tab;
+        this.updateTabUI();
+        await this.loadData();
+    }
+
+    updateTabUI() {
+        const activeClasses = ['border-indigo-500', 'text-indigo-600', 'border-b-2'];
+        const inactiveClasses = ['border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'border-b-2'];
+
+        if (this.currentTab === 'properties') {
+            this.elements.tabProperties.classList.remove(...inactiveClasses);
+            this.elements.tabProperties.classList.add(...activeClasses);
+            this.elements.tabInquiries.classList.remove(...activeClasses);
+            this.elements.tabInquiries.classList.add(...inactiveClasses);
+            this.elements.addPropertyButton.classList.remove('hidden');
+        } else {
+            this.elements.tabInquiries.classList.remove(...inactiveClasses);
+            this.elements.tabInquiries.classList.add(...activeClasses);
+            this.elements.tabProperties.classList.remove(...activeClasses);
+            this.elements.tabProperties.classList.add(...inactiveClasses);
+            this.elements.addPropertyButton.classList.add('hidden');
+        }
+    }
+
     async loadProperties() {
         this.setState('loading');
 
@@ -69,12 +123,28 @@ class AdminDashboard {
             this.setState('success');
         } catch (error) {
             console.error('Error loading properties:', error);
-            this.handleLoadError(error);
+            this.handleLoadError(error, 'properties');
         }
     }
 
-    handleLoadError(error) {
-        let message = 'Failed to load properties';
+    async loadInquiries() {
+        this.setState('loading');
+
+        try {
+            this.inquiries = await getInquiries({ skip: 0, limit: 100 });
+            this.renderInquiries();
+            this.setState('success');
+        } catch (error) {
+            console.error('Error loading inquiries:', error);
+            this.handleLoadError(error, 'inquiries');
+        }
+    }
+
+    handleLoadError(error, type = 'properties') {
+        const title = type === 'properties' ? 'Error loading properties' : 'Error loading inquiries';
+        let message = `Unable to retrieve ${type}. Please try again later.`;
+
+        this.elements.errorTitle.textContent = title;
 
         if (error.type === 'NETWORK_ERROR') {
             message = 'Unable to connect to server. Please check your connection.';
@@ -106,6 +176,13 @@ class AdminDashboard {
         );
 
         this.elements.tableContainer.appendChild(table);
+    }
+
+    renderInquiries() {
+        this.elements.inquiryTableContainer.innerHTML = '';
+
+        const table = renderInquiryTable(this.inquiries);
+        this.elements.inquiryTableContainer.appendChild(table);
     }
 
     openForm(property = null) {
@@ -150,7 +227,9 @@ class AdminDashboard {
                 showSuccessToast('Property created successfully');
             }
 
-            this.renderProperties();
+            if (this.currentTab === 'properties') {
+                this.renderProperties();
+            }
             this.closeForm();
         } catch (error) {
             console.error('Error saving property:', error);
@@ -261,7 +340,8 @@ class AdminDashboard {
         this.elements.loadingState.classList.add('hidden');
         this.elements.errorState.classList.add('hidden');
         this.elements.emptyState.classList.add('hidden');
-        this.elements.propertyList.classList.add('hidden');
+        this.elements.propertySection.classList.add('hidden');
+        this.elements.inquirySection.classList.add('hidden');
 
         // Show requested state
         switch (state) {
@@ -275,7 +355,11 @@ class AdminDashboard {
                 this.elements.emptyState.classList.remove('hidden');
                 break;
             case 'success':
-                this.elements.propertyList.classList.remove('hidden');
+                if (this.currentTab === 'properties') {
+                    this.elements.propertySection.classList.remove('hidden');
+                } else {
+                    this.elements.inquirySection.classList.remove('hidden');
+                }
                 break;
         }
     }
