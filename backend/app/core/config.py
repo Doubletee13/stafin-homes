@@ -23,6 +23,12 @@ CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
 CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY")
 CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
 
+# SendGrid configuration
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL")
+SENDGRID_FROM_NAME = os.getenv("SENDGRID_FROM_NAME", "STAFIN Homes")
+SENDGRID_ADMIN_EMAIL = os.getenv("SENDGRID_ADMIN_EMAIL", "admin@stafinhomes.com")
+
 def validate_security_config() -> None:
     """
     Validate security configuration on application startup
