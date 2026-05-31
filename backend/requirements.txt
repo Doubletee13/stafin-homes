@@ -11,3 +11,4 @@ bcrypt==3.2.2
 python-jose[cryptography]==3.3.0
 cloudinary>=1.39.0
 python-multipart>=0.0.9
+sendgrid>=6.11.0
