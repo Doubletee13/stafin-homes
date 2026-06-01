@@ -1,0 +1,60 @@
+version: "3.8"
+
+services:
+  backend:
+    depends_on:
+      - db
+    build:
+      context: ./backend
+      # network: host removed - builds natively on prod CI runner or local test
+    container_name: stafin_backend_prod
+    ports:
+      - "8000:8000"
+    # No local volume mapping. The image uses its own baked-in code.
+    environment:
+      # These must point to the production settings in .env when testing
+      - DATABASE_URL=${PROD_DATABASE_URL}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - SECRET_KEY=${SECRET_KEY}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - SENDGRID_FROM_EMAIL=${SENDGRID_FROM_EMAIL}
+      - SENDGRID_FROM_NAME=${SENDGRID_FROM_NAME}
+      - SENDGRID_ADMIN_EMAIL=${SENDGRID_ADMIN_EMAIL}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - NEWSDATA_API_KEY=${NEWSDATA_API_KEY}
+    networks:
+      - stafin_net
+
+  frontend:
+    build: 
+      context: ./frontend
+    container_name: stafin_frontend_prod
+    ports:
+      - "80:80"
+    # No volumes mapping. Purely tests the compiled Nginx static assets block.
+    networks:
+      - stafin_net
+
+  db:
+    # Included just for parity, but typically prod runs on a managed DB (Supabase)
+    image: postgres:15-alpine
+    container_name: stafin_db_prod
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=stafin
+      - POSTGRES_PASSWORD=stafin_secret
+      - POSTGRES_DB=stafin_homes
+    volumes:
+      - pgdata_prod:/var/lib/postgresql/data
+    networks:
+      - stafin_net
+
+networks:
+  stafin_net:
+    driver: bridge
+
+volumes:
+  pgdata_prod:
