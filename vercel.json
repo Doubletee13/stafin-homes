@@ -1,0 +1,10 @@
+{
+  "cleanUrls": true,
+  "outputDirectory": "frontend/vercel_build",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/$1.html"
+    }
+  ]
+}
