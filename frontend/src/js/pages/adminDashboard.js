@@ -9,7 +9,7 @@ class AdminDashboard {
         this.inquiries = [];
         this.currentProperty = null;
         this.isEditMode = false;
-        this.currentTab = 'properties'; // 'properties' | 'inquiries'
+        this.currentTab = 'overview'; // Default to 'overview'
 
         this.elements = {
             loadingState: document.getElementById('loading-state'),
@@ -21,14 +21,20 @@ class AdminDashboard {
             emptyAddButton: document.getElementById('empty-add-btn'),
 
             // Sections
+            overviewSection: document.getElementById('overview-section'),
             propertySection: document.getElementById('property-section'),
             inquirySection: document.getElementById('inquiry-section'),
+
+            // Stats Elements
+            statPropertiesCount: document.getElementById('stat-properties-count'),
+            statInquiriesCount: document.getElementById('stat-inquiries-count'),
 
             // Containers
             tableContainer: document.getElementById('table-container'),
             inquiryTableContainer: document.getElementById('inquiry-table-container'),
 
             // Tabs
+            tabOverview: document.getElementById('tab-overview'),
             tabProperties: document.getElementById('tab-properties'),
             tabInquiries: document.getElementById('tab-inquiries'),
 
@@ -60,6 +66,7 @@ class AdminDashboard {
         this.elements.logoutButton.addEventListener('click', () => this.handleLogout());
 
         // Tab events
+        this.elements.tabOverview.addEventListener('click', () => this.switchTab('overview'));
         this.elements.tabProperties.addEventListener('click', () => this.switchTab('properties'));
         this.elements.tabInquiries.addEventListener('click', () => this.switchTab('inquiries'));
 
@@ -81,8 +88,10 @@ class AdminDashboard {
     async loadData() {
         if (this.currentTab === 'properties') {
             await this.loadProperties();
-        } else {
+        } else if (this.currentTab === 'inquiries') {
             await this.loadInquiries();
+        } else {
+            await this.loadOverview();
         }
     }
 
@@ -98,18 +107,44 @@ class AdminDashboard {
         const activeClasses = ['border-indigo-500', 'text-indigo-600', 'border-b-2'];
         const inactiveClasses = ['border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'border-b-2'];
 
-        if (this.currentTab === 'properties') {
+        [this.elements.tabOverview, this.elements.tabProperties, this.elements.tabInquiries].forEach(t => {
+            if (t) {
+                t.classList.remove(...activeClasses);
+                t.classList.add(...inactiveClasses);
+            }
+        });
+
+        if (this.currentTab === 'overview') {
+            this.elements.tabOverview.classList.remove(...inactiveClasses);
+            this.elements.tabOverview.classList.add(...activeClasses);
+        } else if (this.currentTab === 'properties') {
             this.elements.tabProperties.classList.remove(...inactiveClasses);
             this.elements.tabProperties.classList.add(...activeClasses);
-            this.elements.tabInquiries.classList.remove(...activeClasses);
-            this.elements.tabInquiries.classList.add(...inactiveClasses);
-            this.elements.addPropertyButton.classList.remove('hidden');
         } else {
             this.elements.tabInquiries.classList.remove(...inactiveClasses);
             this.elements.tabInquiries.classList.add(...activeClasses);
-            this.elements.tabProperties.classList.remove(...activeClasses);
-            this.elements.tabProperties.classList.add(...inactiveClasses);
-            this.elements.addPropertyButton.classList.add('hidden');
+        }
+    }
+
+    async loadOverview() {
+        this.setState('loading');
+
+        try {
+            const [propResponse, inqResponse] = await Promise.all([
+                getProperties({ limit: 100 }),
+                getInquiries({ skip: 0, limit: 100 })
+            ]);
+
+            const props = propResponse?.data ?? propResponse?.items ?? propResponse ?? [];
+            const inqs = inqResponse ?? [];
+
+            if (this.elements.statPropertiesCount) this.elements.statPropertiesCount.textContent = props.length;
+            if (this.elements.statInquiriesCount) this.elements.statInquiriesCount.textContent = inqs.length;
+
+            this.setState('success');
+        } catch (error) {
+            console.error('Error loading overview:', error);
+            this.handleLoadError(error, 'overview');
         }
     }
 
@@ -118,7 +153,7 @@ class AdminDashboard {
 
         try {
             const response = await getProperties({ limit: 100 });
-            this.properties = response?.items ?? response;
+            this.properties = response?.data ?? response?.items ?? response;
             this.renderProperties();
             this.setState('success');
         } catch (error) {
@@ -141,7 +176,7 @@ class AdminDashboard {
     }
 
     handleLoadError(error, type = 'properties') {
-        const title = type === 'properties' ? 'Error loading properties' : 'Error loading inquiries';
+        const title = type === 'properties' ? 'Error loading properties' : (type === 'overview' ? 'Error loading overview' : 'Error loading inquiries');
         let message = `Unable to retrieve ${type}. Please try again later.`;
 
         this.elements.errorTitle.textContent = title;
@@ -340,8 +375,10 @@ class AdminDashboard {
         this.elements.loadingState.classList.add('hidden');
         this.elements.errorState.classList.add('hidden');
         this.elements.emptyState.classList.add('hidden');
-        this.elements.propertySection.classList.add('hidden');
-        this.elements.inquirySection.classList.add('hidden');
+
+        if (this.elements.overviewSection) this.elements.overviewSection.classList.add('hidden');
+        if (this.elements.propertySection) this.elements.propertySection.classList.add('hidden');
+        if (this.elements.inquirySection) this.elements.inquirySection.classList.add('hidden');
 
         // Show requested state
         switch (state) {
@@ -355,9 +392,11 @@ class AdminDashboard {
                 this.elements.emptyState.classList.remove('hidden');
                 break;
             case 'success':
-                if (this.currentTab === 'properties') {
+                if (this.currentTab === 'overview' && this.elements.overviewSection) {
+                    this.elements.overviewSection.classList.remove('hidden');
+                } else if (this.currentTab === 'properties' && this.elements.propertySection) {
                     this.elements.propertySection.classList.remove('hidden');
-                } else {
+                } else if (this.currentTab === 'inquiries' && this.elements.inquirySection) {
                     this.elements.inquirySection.classList.remove('hidden');
                 }
                 break;
