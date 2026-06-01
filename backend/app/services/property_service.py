@@ -34,8 +34,8 @@ def get_all_properties(
     keyword: str = None,
     bathrooms: int = None,
     sort: str = None,
-    skip: int = 0,
-    limit: int = 20,
+    page: int = 1,
+    limit: int = 9,
 ) -> dict:
     query = db.query(Property)
 
@@ -71,13 +71,20 @@ def get_all_properties(
     total = query.count()
 
     # --- Pagination ---
+    skip = (page - 1) * limit
     items = query.offset(skip).limit(limit).all()
 
+    import math
+    total_pages = math.ceil(total / limit) if limit > 0 else 1
+
     return {
-        "items": items,
-        "total": total,
-        "skip": skip,
-        "limit": limit,
+        "data": items,
+        "pagination": {
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "totalPages": total_pages,
+        }
     }
 
 

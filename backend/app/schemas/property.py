@@ -78,9 +78,13 @@ class PropertyResponse(BaseModel):
         from_attributes = True
 
 
+class PaginationMeta(BaseModel):
+    total: int
+    page: int
+    limit: int
+    totalPages: int
+
 class PropertyListResponse(BaseModel):
     """Paginated list of properties returned by the API."""
-    items: List[PropertyResponse]
-    total: int
-    skip: int
-    limit: int
+    data: List[PropertyResponse]
+    pagination: PaginationMeta
