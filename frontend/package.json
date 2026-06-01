@@ -4,7 +4,9 @@
   "description": "Frontend for Stafin Homes",
   "scripts": {
     "build:css": "tailwindcss -i ./src/input.css -o ./dist/output.css",
-    "watch:css": "tailwindcss -i ./src/input.css -o ./dist/output.css --watch"
+    "watch:css": "tailwindcss -i ./src/input.css -o ./dist/output.css --watch",
+    "build:vercel": "rm -rf vercel_build && mkdir vercel_build && cp -r dist vercel_build/ && cp -r src vercel_build/ && cp -r src/pages/* vercel_build/",
+    "build": "npm run build:css && npm run build:vercel"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.19",
