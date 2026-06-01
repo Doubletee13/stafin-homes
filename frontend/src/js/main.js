@@ -2,6 +2,17 @@ console.log("Frontend initialized");
 
 // Basic dynamic component loading stub for Vanilla JS
 async function loadComponents() {
+    // Inject Loader early
+    const loader = document.createElement('div');
+    loader.className = 'page-loader';
+    loader.innerHTML = `
+        <div class="loader-square"></div>
+        <div class="loader-square"></div>
+        <div class="loader-square"></div>
+        <div class="loader-square"></div>
+    `;
+    document.body.appendChild(loader);
+
     try {
         const navbar = await fetch('/src/components/navbar.html').then(res => res.text());
         const footer = await fetch('/src/components/footer.html').then(res => res.text());
@@ -9,32 +20,223 @@ async function loadComponents() {
         const navElem = document.getElementById('navbar');
         const footerElem = document.getElementById('footer');
 
-        if (navElem) navElem.innerHTML = navbar;
+        if (navElem) {
+            navElem.innerHTML = navbar;
+            if (typeof initializeNewsTicker === 'function') {
+                initializeNewsTicker();
+            }
+            initNavbarInteractions();
+            initSmartNavbar();
+        }
         if (footerElem) footerElem.innerHTML = footer;
     } catch (error) {
         console.error("Error loading components:", error);
+    } finally {
+        loader.classList.add('hidden-loader');
+        setTimeout(() => loader.remove(), 400);
     }
 }
 
 /**
+ * Initialise all navbar interactive behaviours after the navbar HTML is injected.
+ * - Mobile side drawer open/close
+ * - Drawer tab switching (Menu / Categories)
+ * - Desktop Browse Categories dropdown (hover + click)
+ */
+function initNavbarInteractions() {
+    const hamburgerBtn = document.getElementById('mobile-menu-btn');
+    const sideDrawer = document.getElementById('side-drawer');
+    const drawerOverlay = document.getElementById('drawer-overlay');
+    const drawerCloseBtn = document.getElementById('drawer-close-btn');
+
+    // ── Helper: open / close drawer ──────────────────────────────────────
+    function openDrawer() {
+        if (!sideDrawer || !drawerOverlay) return;
+        sideDrawer.classList.add('open');
+        sideDrawer.setAttribute('aria-hidden', 'false');
+        sideDrawer.removeAttribute('inert');
+        drawerOverlay.classList.remove('hidden');
+        // Trigger transition next frame
+        requestAnimationFrame(() => drawerOverlay.classList.add('open'));
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDrawer() {
+        if (!sideDrawer || !drawerOverlay) return;
+        sideDrawer.classList.remove('open');
+        sideDrawer.setAttribute('aria-hidden', 'true');
+        sideDrawer.setAttribute('inert', '');
+        drawerOverlay.classList.remove('open');
+        document.body.style.overflow = '';
+        // Hide overlay once transition done
+        setTimeout(() => drawerOverlay.classList.add('hidden'), 350);
+    }
+
+    if (hamburgerBtn) hamburgerBtn.addEventListener('click', openDrawer);
+    if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', closeDrawer);
+    if (drawerOverlay) drawerOverlay.addEventListener('click', closeDrawer);
+
+    // ── Drawer Tab Switching ─────────────────────────────────────────────
+    const drawerTabs = document.querySelectorAll('.drawer-tab');
+    const drawerPanels = document.querySelectorAll('.drawer-panel');
+
+    drawerTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const target = tab.dataset.tab;
+
+            // Update tab styles
+            drawerTabs.forEach(t => {
+                t.classList.remove('text-primary', 'border-primary');
+                t.classList.add('text-gray-400', 'border-transparent');
+            });
+            tab.classList.add('text-primary', 'border-primary');
+            tab.classList.remove('text-gray-400', 'border-transparent');
+
+            // Show/hide panels
+            drawerPanels.forEach(panel => {
+                if (panel.id === `drawer-panel-${target}`) {
+                    panel.classList.remove('hidden');
+                } else {
+                    panel.classList.add('hidden');
+                }
+            });
+        });
+    });
+
+    // ── Desktop Browse Categories Dropdown ───────────────────────────────
+    const categoriesWrapper = document.getElementById('categories-dropdown-wrapper');
+    const categoriesBtn = document.getElementById('browse-categories-btn');
+    const categoriesMenu = document.getElementById('categories-dropdown');
+    const categoriesChevron = document.getElementById('categories-chevron');
+
+    if (categoriesWrapper && categoriesBtn && categoriesMenu) {
+        let hideTimeout;
+
+        function showDropdown() {
+            clearTimeout(hideTimeout);
+            categoriesMenu.classList.remove('hidden');
+            // Trigger CSS transition next frame
+            requestAnimationFrame(() => categoriesMenu.classList.add('open'));
+            categoriesBtn.setAttribute('aria-expanded', 'true');
+            if (categoriesChevron) categoriesChevron.style.transform = 'rotate(180deg)';
+        }
+
+        function hideDropdown() {
+            hideTimeout = setTimeout(() => {
+                categoriesMenu.classList.remove('open');
+                categoriesBtn.setAttribute('aria-expanded', 'false');
+                if (categoriesChevron) categoriesChevron.style.transform = '';
+                setTimeout(() => categoriesMenu.classList.add('hidden'), 200);
+            }, 120);
+        }
+
+        categoriesWrapper.addEventListener('mouseenter', showDropdown);
+        categoriesWrapper.addEventListener('mouseleave', hideDropdown);
+        categoriesBtn.addEventListener('click', () => {
+            const isOpen = categoriesMenu.classList.contains('open');
+            isOpen ? hideDropdown() : showDropdown();
+        });
+
+        // Close on outside click
+        document.addEventListener('click', (e) => {
+            if (!categoriesWrapper.contains(e.target)) hideDropdown();
+        });
+    }
+
+    // ── Dark Mode Toggle (wired after component injection) ───────────────
+    wireDarkModeToggle();
+}
+
+/**
+ * Smart Sticky Navbar — Hides on scroll down, shows on scroll up
+ */
+function initSmartNavbar() {
+    const nav = document.querySelector('nav');
+    if (!nav) return;
+
+    // Apply smooth transition
+    nav.style.transition = 'transform 0.3s ease-in-out';
+
+    let lastScrollY = window.scrollY;
+
+    window.addEventListener('scroll', () => {
+        const currentScrollY = window.scrollY;
+
+        // Don't hide navbar at the very top
+        if (currentScrollY < 100) {
+            nav.style.transform = 'translateY(0)';
+        } else if (currentScrollY > lastScrollY) {
+            // Scrolling down -> hide navbar
+            nav.style.transform = 'translateY(-100%)';
+        } else {
+            // Scrolling up -> show navbar
+            nav.style.transform = 'translateY(0)';
+        }
+
+        lastScrollY = currentScrollY;
+    }, { passive: true });
+}
+
+/**
+ * Dark Mode — initialise on page load and wire toggle button
+ */
+function initDarkMode() {
+    const saved = localStorage.getItem('stafin-theme');
+    if (saved === 'dark') {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+}
+
+function wireDarkModeToggle() {
+    const toggleBtns = document.querySelectorAll('.dark-mode-toggle, #admin-dark-toggle, #admin-dark-toggle-mobile');
+    if (!toggleBtns.length) return;
+
+    const isDark = () => document.documentElement.classList.contains('dark');
+
+    function updateIcons() {
+        const svgContent = isDark() ? `
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+        ` : `
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            </svg>
+        `;
+
+        toggleBtns.forEach(btn => {
+            btn.innerHTML = svgContent;
+            btn.setAttribute('aria-label', isDark() ? 'Switch to light mode' : 'Switch to dark mode');
+            btn.title = isDark() ? 'Light Mode' : 'Dark Mode';
+        });
+    }
+
+    updateIcons();
+
+    toggleBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const nowDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('stafin-theme', nowDark ? 'dark' : 'light');
+            updateIcons();
+        });
+    });
+}
+
+/**
  * WhatsApp popup chat widget.
- * Issue #30: Add WhatsApp Contact Button (enhanced with popup UI)
  */
 function injectWhatsAppWidget() {
     const number = window.WHATSAPP_NUMBER || '';
 
-    // ── Modern WhatsApp logo SVG (2024 brand) ────────────────────────────
+    // Official WhatsApp brand logo SVG
     const waSVG = `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 175.216 175.552" width="28" height="28" fill="white" aria-hidden="true">
-            <defs><linearGradient id="wa-grad" x1="85.915" x2="86.535" y1="32.567" y2="137.092" gradientUnits="userSpaceOnUse">
-                <stop offset="0" stop-color="#57d163"/><stop offset="1" stop-color="#23b33a"/>
-            </linearGradient></defs>
-            <path fill="white" d="M87.184 25.227c-33.733 0-61.166 27.423-61.178 61.13a60.98 60.98 0 0 0 9.349 32.535l1.455 2.312-6.179 22.559 23.146-6.069 2.235 1.324c9.387 5.571 20.15 8.517 31.126 8.521h.023c33.707 0 61.14-27.426 61.153-61.135a60.75 60.75 0 0 0-17.895-43.251 60.75 60.75 0 0 0-43.235-17.926z"/>
-            <path fill="url(#wa-grad)" d="M87.184 25.227c-33.733 0-61.166 27.423-61.178 61.13a60.98 60.98 0 0 0 9.349 32.535l1.455 2.312-6.179 22.559 23.146-6.069 2.235 1.324c9.387 5.571 20.15 8.517 31.126 8.521h.023c33.707 0 61.14-27.426 61.153-61.135a60.75 60.75 0 0 0-17.895-43.251 60.75 60.75 0 0 0-43.235-17.926z"/>
-            <path fill="white" fill-rule="evenodd" d="M68.772 55.603c-1.378-3.061-2.828-3.123-4.137-3.176l-3.524-.043c-1.226 0-3.218.46-4.902 2.3s-6.435 6.287-6.435 15.332 6.588 17.785 7.506 19.013 12.718 20.381 31.405 27.75c15.529 6.124 18.689 4.906 22.061 4.6s10.877-4.447 12.408-8.74 1.532-7.971 1.073-8.74-1.685-1.226-3.525-2.146-10.877-5.367-12.562-5.981-2.91-.919-4.137.921-4.746 5.979-5.819 7.206-2.144 1.381-3.984.462-7.76-2.861-14.784-9.124c-5.465-4.873-9.154-10.891-10.228-12.73s-.114-2.835.808-3.751c.825-.824 1.838-2.147 2.759-3.22s1.224-1.84 1.836-3.065.307-2.301-.153-3.22-4.032-10.011-5.666-13.647z"/>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+            <path d="M16 0C7.163 0 0 7.163 0 16c0 2.822.736 5.472 2.025 7.773L0 32l8.476-2.003A15.937 15.937 0 0016 32c8.837 0 16-7.163 16-16S24.837 0 16 0z" fill="#25D366"/>
+            <path d="M23.334 19.74c-.354-.177-2.094-1.033-2.419-1.15-.324-.118-.56-.177-.797.177-.236.354-.914 1.15-1.12 1.387-.207.236-.413.265-.767.089-.354-.177-1.495-.551-2.847-1.757-1.052-.938-1.762-2.097-1.969-2.451-.207-.354-.022-.545.155-.721.159-.158.354-.413.531-.619.177-.207.236-.354.354-.59.118-.236.059-.442-.03-.619-.089-.177-.797-1.92-1.09-2.628-.287-.69-.579-.596-.797-.607a14.3 14.3 0 00-.678-.012c-.236 0-.619.089-.943.442-.324.354-1.238 1.21-1.238 2.95s1.267 3.42 1.444 3.657c.177.236 2.493 3.806 6.042 5.337.845.364 1.504.582 2.018.745.848.27 1.62.232 2.231.141.68-.102 2.094-.856 2.39-1.683.295-.826.295-1.534.207-1.683-.089-.148-.324-.236-.678-.413z" fill="#fff"/>
         </svg>`;
 
-    // ── Popup card ───────────────────────────────────────────────────────
     const popup = document.createElement('div');
     popup.id = 'wa-popup';
     popup.setAttribute('role', 'dialog');
@@ -74,7 +276,7 @@ function injectWhatsAppWidget() {
         <div style="background:#ece5dd;padding:16px;">
             <div style="background:#fff;border-radius:0 8px 8px 8px;padding:10px 14px;max-width:85%;box-shadow:0 1px 2px rgba(0,0,0,0.1);margin-bottom:12px;">
                 <p style="margin:0;font-size:14px;color:#303030;line-height:1.5;">👋 Hi there! How can we help you find your dream property today?</p>
-                <p style="margin:4px 0 0;font-size:11px;color:#999;text-align:right;">4:18 AM ✓✓</p>
+                <p style="margin:4px 0 0;font-size:11px;color:#999;text-align:right;">Now ✓✓</p>
             </div>
             <!-- Message input -->
             <div style="background:#fff;border-radius:24px;display:flex;align-items:flex-end;gap:8px;padding:8px 12px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
@@ -89,9 +291,14 @@ function injectWhatsAppWidget() {
                 </button>
             </div>
         </div>
+        <style>
+            @media (max-width: 640px) {
+                #wa-fab { bottom: 80px !important; }
+                #wa-popup { bottom: 150px !important; }
+            }
+        </style>
     `;
 
-    // ── Floating trigger button ──────────────────────────────────────────
     const fab = document.createElement('button');
     fab.id = 'wa-fab';
     fab.setAttribute('aria-label', 'Open WhatsApp chat');
@@ -114,18 +321,15 @@ function injectWhatsAppWidget() {
     `;
     fab.innerHTML = waSVG;
 
-    // ── Mount ────────────────────────────────────────────────────────────
     document.body.appendChild(popup);
     document.body.appendChild(fab);
 
-    // ── Auto-resize textarea ─────────────────────────────────────────────
     const textarea = popup.querySelector('#wa-user-msg');
     textarea.addEventListener('input', () => {
         textarea.style.height = 'auto';
         textarea.style.height = Math.min(textarea.scrollHeight, 80) + 'px';
     });
 
-    // ── Toggle popup ─────────────────────────────────────────────────────
     let isOpen = false;
     function openPopup() {
         popup.style.display = 'block';
@@ -143,27 +347,13 @@ function injectWhatsAppWidget() {
         isOpen = false;
     }
 
-    fab.addEventListener('click', (e) => {
-        e.stopPropagation();
-        isOpen ? closePopup() : openPopup();
-    });
-    fab.addEventListener('mouseenter', () => {
-        fab.style.transform = 'scale(1.08)';
-        fab.style.boxShadow = '0 6px 24px rgba(37,211,102,0.65)';
-    });
-    fab.addEventListener('mouseleave', () => {
-        fab.style.transform = 'scale(1)';
-        fab.style.boxShadow = '0 4px 16px rgba(37,211,102,0.5)';
-    });
+    fab.addEventListener('click', (e) => { e.stopPropagation(); isOpen ? closePopup() : openPopup(); });
+    fab.addEventListener('mouseenter', () => { fab.style.transform = 'scale(1.08)'; fab.style.boxShadow = '0 6px 24px rgba(37,211,102,0.65)'; });
+    fab.addEventListener('mouseleave', () => { fab.style.transform = 'scale(1)'; fab.style.boxShadow = '0 4px 16px rgba(37,211,102,0.5)'; });
 
     popup.querySelector('#wa-popup-close').addEventListener('click', closePopup);
+    document.addEventListener('click', (e) => { if (isOpen && !popup.contains(e.target) && e.target !== fab) closePopup(); });
 
-    // Close on outside click
-    document.addEventListener('click', (e) => {
-        if (isOpen && !popup.contains(e.target) && e.target !== fab) closePopup();
-    });
-
-    // ── Send message ─────────────────────────────────────────────────────
     popup.querySelector('#wa-send-btn').addEventListener('click', () => {
         const msg = (textarea.value.trim() || "Hello! I'd like to enquire about properties on Stafin Homes.");
         const url = `https://wa.me/${number}?text=${encodeURIComponent(msg)}`;
@@ -171,7 +361,6 @@ function injectWhatsAppWidget() {
         closePopup();
     });
 
-    // Also send on Enter (not Shift+Enter)
     textarea.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -179,13 +368,13 @@ function injectWhatsAppWidget() {
         }
     });
 
-    // Send hover
     const sendBtn = popup.querySelector('#wa-send-btn');
     sendBtn.addEventListener('mouseenter', () => { sendBtn.style.background = '#1ebe5d'; });
     sendBtn.addEventListener('mouseleave', () => { sendBtn.style.background = '#25D366'; });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    initDarkMode();
     loadComponents();
     injectWhatsAppWidget();
 });

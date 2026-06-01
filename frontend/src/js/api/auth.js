@@ -40,7 +40,7 @@ function isAuthenticated() {
  * Redirect to login page
  */
 function redirectToLogin() {
-    window.location.href = '/admin-login.html';
+    window.location.href = '/admin/login.html';
 }
 
 // Export for use in other modules
