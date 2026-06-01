@@ -5,7 +5,7 @@
   "scripts": {
     "build:css": "tailwindcss -i ./src/input.css -o ./dist/output.css",
     "watch:css": "tailwindcss -i ./src/input.css -o ./dist/output.css --watch",
-    "build:vercel": "rm -rf vercel_build && mkdir -p vercel_build && cp -r dist/. vercel_build/ && cp -r src/pages/. vercel_build/",
+    "build:vercel": "rm -rf vercel_build && mkdir -p vercel_build/src vercel_build/src/components vercel_build/src/fonts vercel_build/src/images vercel_build/src/js && cp -r dist/. vercel_build/ && cp -r src/pages/. vercel_build/ && cp -r src/components/. vercel_build/src/components/ && cp -r src/fonts/. vercel_build/src/fonts/ && cp -r src/images/. vercel_build/src/images/ && cp -r src/js/. vercel_build/src/js/",
     "build": "npm run build:css && npm run build:vercel"
   },
   "devDependencies": {
