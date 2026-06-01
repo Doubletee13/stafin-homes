@@ -10,12 +10,13 @@ RUN npm run build:css
 FROM nginx:alpine
 # Copy built CSS
 COPY --from=builder /app/dist /usr/share/nginx/html/dist
-# Copy JS and components (needed for dynamic loading)
+# Copy js and components
 COPY --from=builder /app/src /usr/share/nginx/html/src
-# Copy pages to root for easy access
-COPY --from=builder /app/src/pages/*.html /usr/share/nginx/html/
-# Move index.html to root explicitly if not already there by glob
-RUN mv /usr/share/nginx/html/index.html /usr/share/nginx/html/index.html 2>/dev/null || true
+# Copy all pages recursively to Nginx root structure so clean URLs map properly
+COPY --from=builder /app/src/pages/ /usr/share/nginx/html/
+
+# Enable 404 error page routing inside default.conf
+RUN sed -i 's/#error_page  404/error_page  404/' /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
