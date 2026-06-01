@@ -15,8 +15,8 @@ COPY --from=builder /app/src /usr/share/nginx/html/src
 # Copy all pages recursively to Nginx root structure so clean URLs map properly
 COPY --from=builder /app/src/pages/ /usr/share/nginx/html/
 
-# Enable 404 error page routing inside default.conf
-RUN sed -i 's/#error_page  404/error_page  404/' /etc/nginx/conf.d/default.conf
+# Replace default config with our SPA production nginx config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
