@@ -4,42 +4,347 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stafin Homes | Real Estate</title>
+    <title>Stafin Homes | Premium Real Estate in Nigeria</title>
+    <meta name="description"
+        content="Find your dream home in Nigeria with Stafin Homes. Premium properties for sale, rent, and short let across Lagos, Abuja, and beyond.">
+    <meta name="keywords"
+        content="real estate, nigeria, lagos, abuja, properties for sale, short let, rent, premium homes">
+    <!-- OpenGraph Meta Tags -->
+    <meta property="og:title" content="Stafin Homes | Premium Real Estate in Nigeria">
+    <meta property="og:description"
+        content="Find your dream home in Nigeria with Stafin Homes. Premium properties for sale, rent, and short let across Lagos, Abuja, and beyond.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://stafinhomes.com">
+    <meta property="og:image" content="https://stafinhomes.com/src/images/gemini-svg.svg">
+    <meta property="og:site_name" content="Stafin Homes">
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Stafin Homes | Premium Real Estate in Nigeria">
+    <meta name="twitter:description"
+        content="Find your dream home in Nigeria with Stafin Homes. Premium properties for sale, rent, and short let across Lagos, Abuja, and beyond.">
+    <meta name="twitter:image" content="https://stafinhomes.com/src/images/gemini-svg.svg">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="/src/images/gemini-svg.svg">
     <link href="/dist/output.css" rel="stylesheet">
 </head>
 
-<body class="flex flex-col min-h-screen bg-gray-50">
-    <!-- Navbar Placeholder -->
+<body class="flex flex-col min-h-screen bg-gray-50 font-outfit">
+    <!-- Navbar -->
     <div id="navbar"></div>
 
     <main class="flex-grow">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-            <div class="text-center">
-                <h1 class="text-4xl font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-                    Find Your Dream <span class="text-blue-600">Home</span>
-                </h1>
-                <p class="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
-                    Stafin Homes connects you with premium properties across Nigeria. Whether you are looking to buy,
-                    rent or for a shortlet, we have you covered.
-                </p>
-                <div class="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
-                    <div class="rounded-md shadow">
-                        <a href="/properties.html"
-                            class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10">
-                            Explore Properties
-                        </a>
+        <!-- Hero Slideshow -->
+        <section id="hero" class="relative h-[85vh] min-h-[500px] overflow-hidden">
+            <!-- Slide 1 -->
+            <div class="hero-slide active" data-slide="0">
+                <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1600&auto=format&fit=crop&q=80"
+                    alt="Modern Nigerian luxury home" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary/40"></div>
+                <div class="absolute inset-0 flex items-center">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+                        <div class="max-w-xl">
+                            <span
+                                class="inline-block bg-accent text-primary text-sm font-semibold px-4 py-1.5 rounded-full mb-4">Premium
+                                Properties</span>
+                            <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-4">
+                                Find Your Dream <span class="text-accent">Home</span> in Nigeria
+                            </h1>
+                            <p class="text-lg text-gray-200 mb-8 leading-relaxed">
+                                Stafin Homes connects you with premium residential and commercial properties across
+                                Lagos, Abuja, and beyond.
+                            </p>
+                            <a href="/properties/"
+                                class="inline-flex items-center px-8 py-3.5 bg-accent text-primary font-bold rounded-lg hover:bg-accent-light transition-colors text-sm shadow-lg">
+                                Explore Properties
+                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5l7 7-7 7" />
+                                </svg>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+
+            <!-- Slide 2 -->
+            <div class="hero-slide" data-slide="1">
+                <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1600&auto=format&fit=crop&q=80"
+                    alt="Nigerian residential estate" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary/40"></div>
+                <div class="absolute inset-0 flex items-center">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+                        <div class="max-w-xl">
+                            <span
+                                class="inline-block bg-accent text-primary text-sm font-semibold px-4 py-1.5 rounded-full mb-4">Trusted
+                                Since Day One</span>
+                            <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-4">
+                                Your Trusted <span class="text-accent">Real Estate</span> Partner
+                            </h1>
+                            <p class="text-lg text-gray-200 mb-8 leading-relaxed">
+                                Whether you're buying, renting, or investing — we make the process seamless and
+                                transparent.
+                            </p>
+                            <a href="/contact/"
+                                class="inline-flex items-center px-8 py-3.5 bg-accent text-primary font-bold rounded-lg hover:bg-accent-light transition-colors text-sm shadow-lg">
+                                Contact an Agent
+                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5l7 7-7 7" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3 -->
+            <div class="hero-slide" data-slide="2">
+                <img src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1600&auto=format&fit=crop&q=80"
+                    alt="Luxury property in Nigeria" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary/40"></div>
+                <div class="absolute inset-0 flex items-center">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+                        <div class="max-w-xl">
+                            <span
+                                class="inline-block bg-accent text-primary text-sm font-semibold px-4 py-1.5 rounded-full mb-4">Short
+                                Lets Available</span>
+                            <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-4">
+                                Luxury <span class="text-accent">Short Lets</span> Across Nigeria
+                            </h1>
+                            <p class="text-lg text-gray-200 mb-8 leading-relaxed">
+                                Fully furnished, prime locations — perfect for business travelers and vacationers.
+                            </p>
+                            <a href="/properties/"
+                                class="inline-flex items-center px-8 py-3.5 bg-accent text-primary font-bold rounded-lg hover:bg-accent-light transition-colors text-sm shadow-lg">
+                                View Short Lets
+                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5l7 7-7 7" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Arrows -->
+            <button id="hero-prev"
+                class="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/40 backdrop-blur-sm text-white p-3 rounded-full transition-all"
+                aria-label="Previous slide">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <button id="hero-next"
+                class="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/40 backdrop-blur-sm text-white p-3 rounded-full transition-all"
+                aria-label="Next slide">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
+
+            <!-- Dots -->
+            <div class="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+                <button class="hero-dot w-3 h-3 rounded-full bg-white/50 transition-all" data-dot="0"
+                    aria-label="Go to slide 1"></button>
+                <button class="hero-dot w-3 h-3 rounded-full bg-white/50 transition-all" data-dot="1"
+                    aria-label="Go to slide 2"></button>
+                <button class="hero-dot w-3 h-3 rounded-full bg-white/50 transition-all" data-dot="2"
+                    aria-label="Go to slide 3"></button>
+            </div>
+
+            <!-- Hero Search Bar -->
+            <div class="absolute bottom-0 left-0 right-0 z-20 px-4 sm:px-6 lg:px-8 pb-6">
+                <div class="max-w-3xl mx-auto">
+                    <form id="hero-search-form"
+                        class="flex items-center bg-white/95 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-white/20"
+                        style="background-color: rgba(255, 255, 255, 0.95) !important;">
+                        <div class="flex items-center px-4 flex-1 gap-3">
+                            <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            <input id="hero-search-input" type="text"
+                                placeholder="Search by location, property type, or keyword..."
+                                class="flex-1 py-4 text-sm text-gray-800 placeholder-gray-400 bg-transparent outline-none font-medium"
+                                style="background-color: transparent !important; color: #1f2937 !important;"
+                                aria-label="Search properties" />
+                        </div>
+                        <button type="submit"
+                            class="px-6 py-4 bg-primary text-white font-semibold text-sm hover:bg-primary-light transition-colors whitespace-nowrap flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            Search
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Why Choose Us -->
+        <section class="py-20 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-14">
+                    <span class="text-accent font-semibold text-sm uppercase tracking-wider">Why Stafin Homes</span>
+                    <h2 class="text-3xl md:text-4xl font-bold text-primary mt-2">Why Nigerians Choose Us</h2>
+                    <p class="text-gray-500 mt-3 max-w-2xl mx-auto">We deliver trust, quality, and an unmatched property
+                        experience across Nigeria.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Card 1 -->
+                    <div class="bg-gray-50 rounded-xl p-8 text-center hover:shadow-lg transition-shadow group">
+                        <div
+                            class="w-14 h-14 bg-accent/10 rounded-xl flex items-center justify-center mx-auto mb-5 group-hover:bg-accent/20 transition-colors">
+                            <svg class="w-7 h-7 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-primary mb-2">Verified Listings</h3>
+                        <p class="text-gray-500 text-sm leading-relaxed">Every property is vetted and verified. No
+                            surprises — only legitimate, high-quality listings.</p>
+                    </div>
+                    <!-- Card 2 -->
+                    <div class="bg-gray-50 rounded-xl p-8 text-center hover:shadow-lg transition-shadow group">
+                        <div
+                            class="w-14 h-14 bg-accent/10 rounded-xl flex items-center justify-center mx-auto mb-5 group-hover:bg-accent/20 transition-colors">
+                            <svg class="w-7 h-7 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-primary mb-2">Prime Locations</h3>
+                        <p class="text-gray-500 text-sm leading-relaxed">Lagos, Abuja, Port Harcourt — properties in
+                            Nigeria's most sought-after neighborhoods.</p>
+                    </div>
+                    <!-- Card 3 -->
+                    <div class="bg-gray-50 rounded-xl p-8 text-center hover:shadow-lg transition-shadow group">
+                        <div
+                            class="w-14 h-14 bg-accent/10 rounded-xl flex items-center justify-center mx-auto mb-5 group-hover:bg-accent/20 transition-colors">
+                            <svg class="w-7 h-7 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-primary mb-2">Best Value</h3>
+                        <p class="text-gray-500 text-sm leading-relaxed">Competitive pricing with flexible payment
+                            options. Find your perfect fit without breaking the bank.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Testimonials -->
+        <section class="py-20 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-14">
+                    <span class="text-accent font-semibold text-sm uppercase tracking-wider">Testimonials</span>
+                    <h2 class="text-3xl md:text-4xl font-bold text-primary mt-2">What Our Clients Say</h2>
+                </div>
+                <div class="relative max-w-3xl mx-auto h-64 sm:h-52">
+                    <!-- Testimonial 1 -->
+                    <div class="testimonial-card active" data-testimonial="0">
+                        <div class="bg-white rounded-xl shadow-md p-8 text-center">
+                            <div class="w-16 h-16 rounded-full overflow-hidden mx-auto mb-4 ring-2 ring-accent/30">
+                                <img src="/src/images/testimonial_adebayo.png" alt="Adebayo Ogundimu"
+                                    class="w-full h-full object-cover">
+                            </div>
+                            <p class="text-gray-600 italic mb-4">"Stafin Homes helped me find the perfect 3-bedroom
+                                apartment in Lekki within a week. Their team was professional and responsive."</p>
+                            <p class="font-semibold text-primary">Adebayo Ogundimu</p>
+                            <p class="text-sm text-gray-400">Homeowner, Lagos</p>
+                        </div>
+                    </div>
+                    <!-- Testimonial 2 -->
+                    <div class="testimonial-card" data-testimonial="1">
+                        <div class="bg-white rounded-xl shadow-md p-8 text-center">
+                            <div class="w-16 h-16 rounded-full overflow-hidden mx-auto mb-4 ring-2 ring-accent/30">
+                                <img src="/src/images/testimonial_fatima.png" alt="Fatima Ibrahim"
+                                    class="w-full h-full object-cover">
+                            </div>
+                            <p class="text-gray-600 italic mb-4">"The short let experience was seamless. Great property,
+                                excellent customer service. Highly recommend for business travelers."</p>
+                            <p class="font-semibold text-primary">Fatima Ibrahim</p>
+                            <p class="text-sm text-gray-400">Business Traveler, Abuja</p>
+                        </div>
+                    </div>
+                    <!-- Testimonial 3 -->
+                    <div class="testimonial-card" data-testimonial="2">
+                        <div class="bg-white rounded-xl shadow-md p-8 text-center">
+                            <div class="w-16 h-16 rounded-full overflow-hidden mx-auto mb-4 ring-2 ring-accent/30">
+                                <img src="/src/images/testimonial_chinedu.png" alt="Chinedu Eze"
+                                    class="w-full h-full object-cover">
+                            </div>
+                            <p class="text-gray-600 italic mb-4">"As a first-time buyer, I was nervous. Stafin Homes
+                                walked me through every step — from inspection to paperwork. 5 stars!"</p>
+                            <p class="font-semibold text-primary">Chinedu Eze</p>
+                            <p class="text-sm text-gray-400">First-time Buyer, Enugu</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Testimonial Dots -->
+                <div class="flex justify-center gap-2 mt-8">
+                    <button class="testimonial-dot w-3 h-3 rounded-full bg-gray-300 transition-all" data-tdot="0"
+                        aria-label="Testimonial 1"></button>
+                    <button class="testimonial-dot w-3 h-3 rounded-full bg-gray-300 transition-all" data-tdot="1"
+                        aria-label="Testimonial 2"></button>
+                    <button class="testimonial-dot w-3 h-3 rounded-full bg-gray-300 transition-all" data-tdot="2"
+                        aria-label="Testimonial 3"></button>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Banner -->
+        <section class="py-20 bg-primary">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Ready to Find Your Dream Home?</h2>
+                <p class="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">Browse our curated collection of premium
+                    properties or contact our agents for personalized assistance.</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="/properties/"
+                        class="px-8 py-3.5 bg-accent text-primary font-bold rounded-lg hover:bg-accent-light transition-colors text-sm shadow-lg">
+                        Browse Properties
+                    </a>
+                    <a href="/contact/"
+                        class="px-8 py-3.5 border-2 border-white text-white font-bold rounded-lg hover:bg-white hover:text-primary transition-all text-sm">
+                        Contact Us
+                    </a>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <!-- Footer Placeholder -->
+    <!-- Footer -->
     <div id="footer"></div>
 
     <!-- Scripts -->
     <script src="/src/js/whatsappConfig.js"></script>
+    <script src="/src/js/components/newsTicker.js"></script>
     <script src="/src/js/main.js"></script>
+    <script src="/src/js/pages/homepage.js"></script>
+    <script>
+        // Hero search form handler
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('hero-search-form');
+            if (form) {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    const query = document.getElementById('hero-search-input').value.trim();
+                    if (query) {
+                        window.location.href = '/properties.html?keyword=' + encodeURIComponent(query);
+                    } else {
+                        window.location.href = '/properties.html';
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>
