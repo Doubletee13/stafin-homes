@@ -15,7 +15,7 @@ config = context.config
 
 # Set the DB URL dynamically from the app config — never hardcode credentials
 from app.core.config import DATABASE_URL
-config.set_main_option("sqlalchemy.url", DATABASE_URL)
+config.set_main_option("sqlalchemy.url", DATABASE_URL.replace("%", "%%"))
 
 # Interpret the config file for Python logging
 if config.config_file_name is not None:

@@ -2,32 +2,43 @@ version: "2.2"
 
 services:
   backend:
-    build: ./backend
+    depends_on:
+      - db
+    build:
+      context: ./backend
+      network: host
     container_name: stafin_backend
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
     environment:
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_NAME=${MYSQL_DATABASE}
-      - DB_USER=${MYSQL_USER}
-      - DB_PASSWORD=${MYSQL_PASSWORD}
+      - DATABASE_URL=${DATABASE_URL}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - SECRET_KEY=${SECRET_KEY}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
-      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
-      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
-      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
       - SENDGRID_API_KEY=${SENDGRID_API_KEY}
       - SENDGRID_FROM_EMAIL=${SENDGRID_FROM_EMAIL}
       - SENDGRID_FROM_NAME=${SENDGRID_FROM_NAME}
       - SENDGRID_ADMIN_EMAIL=${SENDGRID_ADMIN_EMAIL}
       - FRONTEND_URL=${FRONTEND_URL}
       - NEWSDATA_API_KEY=${NEWSDATA_API_KEY}
-    depends_on:
-      mysql:
-        condition: service_healthy
+    networks:
+      - stafin_net
+
+  db:
+    image: postgres:15-alpine
+    container_name: stafin_db
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=stafin
+      - POSTGRES_PASSWORD=stafin_secret
+      - POSTGRES_DB=stafin_homes
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     networks:
       - stafin_net
 
@@ -39,31 +50,9 @@ services:
     networks:
       - stafin_net
 
-  mysql:
-    image: mysql:8.0
-    container_name: stafin_mysql
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    ports:
-      - "3305:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - stafin_net
-
-volumes:
-  mysql_data:
-
 networks:
   stafin_net:
     driver: bridge
+
+volumes:
+  pgdata:
