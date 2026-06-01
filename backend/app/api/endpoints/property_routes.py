@@ -33,8 +33,8 @@ def get_all(
     keyword: str = Query(None, description="Search title and description"),
     bathrooms: int = Query(None, ge=0, description="Minimum bathrooms"),
     sort: str = Query(None, description="Sort order: newest, oldest, price_asc, price_desc"),
-    skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(20, ge=1, le=100, description="Maximum records to return"),
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(9, ge=1, le=100, description="Maximum records to return"),
     db: Session = Depends(get_db),
 ):
     return property_service.get_all_properties(
@@ -47,7 +47,7 @@ def get_all(
         keyword=keyword,
         bathrooms=bathrooms,
         sort=sort,
-        skip=skip,
+        page=page,
         limit=limit,
     )
 

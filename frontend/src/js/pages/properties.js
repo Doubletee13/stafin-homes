@@ -4,7 +4,7 @@
  * while preserving all existing filter/URL sync behaviour.
  */
 
-const PROPERTIES_PER_PAGE = 12;
+const PROPERTIES_PER_PAGE = 9;
 
 class PropertiesPage {
     constructor() {
@@ -212,7 +212,9 @@ class PropertiesPage {
                 this.showState('error', 'Received invalid data from server. Please try again.');
                 break;
             default:
-                this.showState('error', error.message || 'Failed to load properties. Please try again.');
+                const isTechnical = error instanceof ReferenceError || error instanceof TypeError || error instanceof SyntaxError;
+                const msg = isTechnical ? 'An unexpected error occurred while loading properties. Please try again.' : (error.message || 'Failed to load properties. Please try again.');
+                this.showState('error', msg);
         }
     }
 
@@ -236,9 +238,6 @@ class PropertiesPage {
         this.showSkeletons();
 
         try {
-            const skip = (this.page - 1) * PROPERTIES_PER_PAGE;
-
-            // Build API filter object
             const apiFilters = {};
             const f = this.filters;
             if (f.location) apiFilters.location = f.location;
@@ -249,17 +248,19 @@ class PropertiesPage {
             if (f.keyword) apiFilters.keyword = f.keyword;
             if (f.sort) apiFilters.sort = f.sort;
             if (f.bathrooms) apiFilters.bathrooms = f.bathrooms;
-            apiFilters.skip = skip;
+            apiFilters.page = this.page;
             apiFilters.limit = PROPERTIES_PER_PAGE;
 
             const response = await getProperties(apiFilters);
 
-            // Handle new paginated response shape {items, total, skip, limit}
-            const properties = response?.items ?? response;
-            const total = response?.total ?? properties.length;
+            // Handle new paginated response shape {data, pagination}
+            const properties = response?.data ?? response;
+            const pagination = response?.pagination;
 
-            this.totalCount = total;
-            this.totalPages = Math.max(1, Math.ceil(total / PROPERTIES_PER_PAGE));
+            this.totalCount = pagination?.total ?? properties.length;
+            this.totalPages = pagination?.totalPages ?? Math.max(1, Math.ceil(this.totalCount / PROPERTIES_PER_PAGE));
+
+            this.renderCount(pagination || { total: this.totalCount, page: this.page, limit: PROPERTIES_PER_PAGE });
 
             if (!properties || properties.length === 0) {
                 this.elements.propertiesGrid && (this.elements.propertiesGrid.innerHTML = '');
@@ -303,6 +304,33 @@ class PropertiesPage {
             if (error.name === 'AbortError') return; // Cancelled — ignore
             this.handleError(error);
         }
+    }
+
+    /**
+     * Render the result count message
+     */
+    renderCount(pagination) {
+        if (!pagination) return;
+        let countEl = document.getElementById('results-count');
+        if (!countEl) {
+            countEl = document.createElement('div');
+            countEl.id = 'results-count';
+            countEl.className = 'text-sm text-gray-500 font-medium mb-4';
+            // Insert it before the properties grid
+            if (this.elements.propertiesGrid && this.elements.propertiesGrid.parentNode) {
+                this.elements.propertiesGrid.parentNode.insertBefore(countEl, this.elements.propertiesGrid);
+            }
+        }
+
+        const { total, page, limit } = pagination;
+        if (total === 0) {
+            countEl.textContent = '';
+            return;
+        }
+
+        const from = (page - 1) * limit + 1;
+        const to = Math.min(page * limit, total);
+        countEl.textContent = `Showing ${from}-${to} of ${total} properties`;
     }
 }
 

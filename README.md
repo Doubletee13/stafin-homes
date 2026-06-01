@@ -38,6 +38,14 @@ docker-compose up --build
 | Backend  | http://localhost:8000/health   |
 | Frontend | http://localhost:3000          |
 
-### Environment Variables
+## Features Added in UI/UX Overhaul Phase
+
+- **Admin Statistics Dashboard**: Default overview tab for administrators displaying high-level metrics like total property listings and client inquiries.
+- **Smart Sticky Navbar**: Dynamically hides on scroll down and reveals on scroll up, while supporting a live real estate news ticker.
+- **Complete SEO Enhancement**: Comprehensive OpenGraph and Twitter card meta tags added to public-facing pages, with security `noindex` applied to admin views.
+- **Mobile Responsive Modals**: Improved mobile UI for property and notification management with clean single-column forms on small screens.
+- **Enhanced Dark Mode**: Corrected contrast issues across property cards, navigation drawers, and global typographies.
+
+## Environment Variables
 
 Copy `.env` and adjust credentials as needed. **Never commit `.env` to version control.**

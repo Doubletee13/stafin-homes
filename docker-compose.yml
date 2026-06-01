@@ -24,6 +24,7 @@ services:
       - SENDGRID_FROM_NAME=${SENDGRID_FROM_NAME}
       - SENDGRID_ADMIN_EMAIL=${SENDGRID_ADMIN_EMAIL}
       - FRONTEND_URL=${FRONTEND_URL}
+      - NEWSDATA_API_KEY=${NEWSDATA_API_KEY}
     depends_on:
       mysql:
         condition: service_healthy

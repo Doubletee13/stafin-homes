@@ -113,8 +113,8 @@ function renderPropertyForm(property, onSubmit, onCancel) {
             </h2>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="col-span-2">
+        <div class="space-y-5">
+            <div>
                 <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Title *</label>
                 <input type="text" id="title" name="title" required value="${property?.title || ''}"
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
@@ -122,7 +122,7 @@ function renderPropertyForm(property, onSubmit, onCancel) {
                 <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="title"></p>
             </div>
 
-            <div class="col-span-2">
+            <div>
                 <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Description *</label>
                 <textarea id="description" name="description" required rows="4"
                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition resize-none"
@@ -130,52 +130,54 @@ function renderPropertyForm(property, onSubmit, onCancel) {
                 <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="description"></p>
             </div>
 
-            <div>
-                <label for="price" class="block text-sm font-medium text-gray-700 mb-2">Price (NGN) *</label>
-                <input type="number" id="price" name="price" required min="0" step="0.01" value="${property?.price || ''}"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                       placeholder="e.g., 50000000" />
-                <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="price"></p>
-            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="price" class="block text-sm font-medium text-gray-700 mb-2">Price (NGN) *</label>
+                    <input type="number" id="price" name="price" required min="0" step="0.01" value="${property?.price || ''}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                           placeholder="e.g., 50000000" />
+                    <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="price"></p>
+                </div>
 
-            <div>
-                <label for="location" class="block text-sm font-medium text-gray-700 mb-2">Location *</label>
-                <input type="text" id="location" name="location" required value="${property?.location || ''}"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                       placeholder="e.g., Lekki, Lagos" />
-                <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="location"></p>
-            </div>
+                <div>
+                    <label for="location" class="block text-sm font-medium text-gray-700 mb-2">Location *</label>
+                    <input type="text" id="location" name="location" required value="${property?.location || ''}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                           placeholder="e.g., Lekki, Lagos" />
+                    <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="location"></p>
+                </div>
 
-            <div>
-                <label for="property_type" class="block text-sm font-medium text-gray-700 mb-2">Property Type *</label>
-                <select id="property_type" name="property_type" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
-                    <option value="">Select type</option>
-                    <option value="sale" ${property?.property_type === 'sale' ? 'selected' : ''}>For Sale</option>
-                    <option value="rent" ${property?.property_type === 'rent' ? 'selected' : ''}>For Rent</option>
-                    <option value="shortlet" ${property?.property_type === 'shortlet' ? 'selected' : ''}>Short Let</option>
-                </select>
-                <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="property_type"></p>
-            </div>
+                <div>
+                    <label for="property_type" class="block text-sm font-medium text-gray-700 mb-2">Property Type *</label>
+                    <select id="property_type" name="property_type" required
+                        class="custom-select w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent transition">
+                        <option value="">Select type</option>
+                        <option value="sale" ${property?.property_type === 'sale' ? 'selected' : ''}>For Sale</option>
+                        <option value="rent" ${property?.property_type === 'rent' ? 'selected' : ''}>For Rent</option>
+                        <option value="shortlet" ${property?.property_type === 'shortlet' ? 'selected' : ''}>Short Let</option>
+                    </select>
+                    <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="property_type"></p>
+                </div>
 
-            <div>
-                <label for="bedrooms" class="block text-sm font-medium text-gray-700 mb-2">Bedrooms *</label>
-                <input type="number" id="bedrooms" name="bedrooms" required min="0" value="${property?.bedrooms ?? ''}"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                       placeholder="e.g., 3" />
-                <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="bedrooms"></p>
-            </div>
+                <div>
+                    <label for="bedrooms" class="block text-sm font-medium text-gray-700 mb-2">Bedrooms *</label>
+                    <input type="number" id="bedrooms" name="bedrooms" required min="0" value="${property?.bedrooms ?? ''}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                           placeholder="e.g., 3" />
+                    <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="bedrooms"></p>
+                </div>
 
-            <div>
-                <label for="bathrooms" class="block text-sm font-medium text-gray-700 mb-2">Bathrooms *</label>
-                <input type="number" id="bathrooms" name="bathrooms" required min="0" value="${property?.bathrooms ?? ''}"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                       placeholder="e.g., 2" />
-                <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="bathrooms"></p>
+                <div class="sm:col-span-2">
+                    <label for="bathrooms" class="block text-sm font-medium text-gray-700 mb-2">Bathrooms *</label>
+                    <input type="number" id="bathrooms" name="bathrooms" required min="0" value="${property?.bathrooms ?? ''}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                           placeholder="e.g., 2" />
+                    <p class="field-error text-red-500 text-sm mt-1 hidden" data-field="bathrooms"></p>
+                </div>
             </div>
             
             <!-- Media Upload Dropzone -->
-            <div class="col-span-2">
+            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Upload Content (Images & Videos) *</label>
                 <div id="drop-zone" class="w-full flex justify-center px-6 pt-5 pb-6 border-2 border-indigo-200 bg-indigo-50/30 border-dashed rounded-lg cursor-pointer hover:bg-indigo-50 transition">
                     <div class="space-y-1 text-center">
@@ -195,7 +197,7 @@ function renderPropertyForm(property, onSubmit, onCancel) {
             </div>
 
             <!-- Live Media Preview -->
-            <div class="col-span-2">
+            <div>
                 <p class="text-sm font-medium text-gray-700 mb-2 flex justify-between items-end">
                     <span>📷 Media View</span>
                     <span id="media-count" class="text-xs text-gray-400">0 items</span>

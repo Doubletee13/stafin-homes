@@ -29,6 +29,9 @@ SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL")
 SENDGRID_FROM_NAME = os.getenv("SENDGRID_FROM_NAME", "STAFIN Homes")
 SENDGRID_ADMIN_EMAIL = os.getenv("SENDGRID_ADMIN_EMAIL", "admin@stafinhomes.com")
 
+# External APIs configuration
+NEWSDATA_API_KEY = os.getenv("NEWSDATA_API_KEY")
+
 def validate_security_config() -> None:
     """
     Validate security configuration on application startup

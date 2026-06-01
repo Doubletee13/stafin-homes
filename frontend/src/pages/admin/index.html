@@ -5,10 +5,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - STAFIN Homes</title>
-    <meta name="robots" content="noindex, nofollow">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="icon" type="image/svg+xml" href="/src/images/gemini-svg.svg">
-    <link href="/dist/output.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { DEFAULT: '#051224', light: '#0a2540', dark: '#030b16' },
+                        accent: { DEFAULT: '#E5A93C', light: '#f5d88a', dark: '#c48a1e' },
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         .admin-search-input:focus {
             outline: none;
@@ -61,7 +71,7 @@
             cursor: pointer;
         }
 
-        /* Dark mode — base */
+        /* Dark mode */
         html.dark body {
             background: #0d1117;
             color: #e6edf3;
@@ -125,36 +135,6 @@
         html.dark #admin-drawer {
             background-color: #161b22;
         }
-
-        /* Dark mode — overview stat cards */
-        html.dark #overview-section .text-gray-500 {
-            color: #8b949e;
-        }
-
-        html.dark #overview-section p.text-primary {
-            color: #58a6ff !important;
-        }
-
-        /* Dark mode — nav tab border */
-        html.dark .mb-8.border-b {
-            border-color: #30363d;
-        }
-
-        /* Dark mode — active tab: was dark navy (#051224) — invisible on dark bg */
-        html.dark .tab-active {
-            color: #e6edf3 !important;
-            border-color: #E5A93C;
-        }
-
-        /* Dark mode — inactive tabs */
-        html.dark .tab-inactive {
-            color: #8b949e;
-        }
-
-        html.dark .tab-inactive:hover {
-            color: #c9d1d9;
-            border-color: #484f58;
-        }
     </style>
 </head>
 
@@ -166,7 +146,7 @@
                 <!-- Logo -->
                 <div class="flex items-center gap-3 flex-shrink-0">
                     <img src="/src/images/gemini-svg.svg" alt="Stafin Homes Logo" class="h-9 w-9 rounded-md">
-                    <div class="block">
+                    <div>
                         <span class="text-lg font-bold text-white leading-none block">STAFIN Homes</span>
                         <span class="text-xs text-gray-400 leading-none">Admin Dashboard</span>
                     </div>
@@ -191,6 +171,13 @@
                     <button id="admin-dark-toggle"
                         class="p-2 rounded-lg text-gray-300 hover:text-white hover:bg-primary-light transition-all focus:outline-none"
                         aria-label="Toggle dark mode"></button>
+                    <button id="add-property-btn"
+                        class="bg-accent text-primary px-4 py-2 rounded-lg hover:bg-accent-light transition-all font-semibold text-sm whitespace-nowrap cursor-pointer shadow-md hover:shadow-lg flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Property
+                    </button>
                     <button id="logout-btn"
                         class="px-4 py-2 rounded-lg border-2 border-red-400 text-red-300 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all font-semibold text-sm whitespace-nowrap cursor-pointer">
                         Logout
@@ -230,7 +217,7 @@
     <!-- Admin Right Drawer (mobile) -->
     <div id="admin-drawer-overlay" class="fixed inset-0 bg-black/50 z-[60] md:hidden"></div>
     <div id="admin-drawer" class="fixed top-0 right-0 h-full w-72 bg-white z-[70] shadow-2xl flex flex-col md:hidden"
-        aria-hidden="true" inert>
+        aria-hidden="true">
         <!-- Drawer header -->
         <div class="flex items-center justify-between px-5 py-4 bg-primary border-b border-primary-light">
             <div class="flex items-center gap-2">
@@ -249,35 +236,31 @@
         </div>
         <!-- Drawer content -->
         <div class="flex-1 overflow-y-auto py-4">
-            <button id="tab-overview-drawer"
-                class="flex items-center gap-3 w-full px-6 py-4 text-left text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                <svg class="w-5 h-5 text-primary dark:text-accent" fill="none" stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            <button id="add-property-btn-drawer"
+                class="flex items-center gap-3 w-full px-6 py-4 text-left text-sm font-semibold text-primary border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
-                Overview Dashboard
+                Add Property
             </button>
             <button id="tab-properties-drawer"
-                class="flex items-center gap-3 w-full px-6 py-4 text-left text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                <svg class="w-5 h-5 text-primary dark:text-accent" fill="none" stroke="currentColor"
-                    viewBox="0 0 24 24">
+                class="flex items-center gap-3 w-full px-6 py-4 text-left text-sm font-medium text-gray-700 border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" />
                 </svg>
                 Properties
             </button>
             <button id="tab-inquiries-drawer"
-                class="flex items-center gap-3 w-full px-6 py-4 text-left text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                <svg class="w-5 h-5 text-primary dark:text-accent" fill="none" stroke="currentColor"
-                    viewBox="0 0 24 24">
+                class="flex items-center gap-3 w-full px-6 py-4 text-left text-sm font-medium text-gray-700 border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
                 Inquiries
             </button>
             <button id="logout-btn-drawer"
-                class="flex items-center gap-3 w-full px-6 py-4 text-left text-sm font-medium text-red-500 dark:text-red-400 border-b border-gray-100 dark:border-gray-800 hover:bg-red-50 dark:hover:bg-gray-800/50 transition-colors">
+                class="flex items-center gap-3 w-full px-6 py-4 text-left text-sm font-medium text-red-500 border-b border-gray-100 hover:bg-red-50 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -321,13 +304,9 @@
 
         <!-- Navigation Tabs -->
         <div class="mb-8 border-b border-gray-200">
-            <nav class="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
-                <button id="tab-overview"
-                    class="tab-active border-b-2 whitespace-nowrap py-4 px-1 font-semibold text-sm transition-colors cursor-pointer">
-                    Overview Dashboard
-                </button>
+            <nav class="-mb-px flex space-x-8" aria-label="Tabs">
                 <button id="tab-properties"
-                    class="tab-inactive border-b-2 whitespace-nowrap py-4 px-1 font-medium text-sm transition-colors cursor-pointer hover:text-gray-700 hover:border-gray-300">
+                    class="tab-active border-b-2 whitespace-nowrap py-4 px-1 font-semibold text-sm transition-colors cursor-pointer">
                     Properties
                 </button>
                 <button id="tab-inquiries"
@@ -337,43 +316,12 @@
             </nav>
         </div>
 
-        <!-- Overview Section -->
-        <div id="overview-section" class="">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-                <!-- Stats Cards will be populated by JS -->
-                <div class="bg-white rounded-xl shadow-md p-6 flex flex-col items-center justify-center h-32">
-                    <p class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Total Properties</p>
-                    <p id="stat-properties-count" class="text-4xl font-bold text-primary">0</p>
-                </div>
-                <div class="bg-white rounded-xl shadow-md p-6 flex flex-col items-center justify-center h-32">
-                    <p class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Total Inquiries</p>
-                    <p id="stat-inquiries-count" class="text-4xl font-bold text-primary">0</p>
-                </div>
-            </div>
-            <div class="bg-white shadow rounded-lg p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Welcome to STAFIN Homes Admin Dashboard</h3>
-                <p class="text-gray-600">Select the Properties tab above to manage your real estate listings or view the
-                    latest client leads under Inquiries.</p>
-            </div>
-        </div>
-
         <!-- Property List -->
-        <div id="property-section" class="hidden">
+        <div id="property-section" class="">
             <div class="bg-white shadow rounded-lg">
-                <div
-                    class="px-4 sm:px-6 py-4 border-b border-gray-200 flex flex-wrap gap-4 items-center justify-between">
+                <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                     <h2 class="text-lg font-semibold text-gray-900">Properties</h2>
-                    <div class="flex items-center gap-3">
-                        <span id="search-results-label" class="text-sm text-gray-400 hidden"></span>
-                        <button id="add-property-btn"
-                            class="bg-accent text-primary px-4 py-2 rounded-lg hover:bg-accent-light transition-all font-semibold text-sm whitespace-nowrap cursor-pointer shadow-md hover:shadow-lg flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 4v16m8-8H4" />
-                            </svg>
-                            Add Property
-                        </button>
-                    </div>
+                    <span id="search-results-label" class="text-sm text-gray-400 hidden"></span>
                 </div>
                 <div id="table-container" class="p-4 sm:p-6">
                     <!-- Property table will be rendered here -->
@@ -447,23 +395,12 @@
                 drawer.classList.add('open');
                 overlay.classList.add('open');
                 drawer.setAttribute('aria-hidden', 'false');
-                drawer.removeAttribute('inert');
                 document.body.style.overflow = 'hidden';
-                // Move focus into the drawer so no element outside retains focus
-                // while aria-hidden is removed — fixes the aria-hidden console warning
-                requestAnimationFrame(() => {
-                    const firstFocusable = drawer.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-                    if (firstFocusable) firstFocusable.focus();
-                });
             }
             function closeAdminDrawer() {
-                // Return focus to the trigger BEFORE applying aria-hidden
-                // to avoid focus being trapped inside a hidden element
-                if (hamburgerBtn) hamburgerBtn.focus();
                 drawer.classList.remove('open');
                 overlay.classList.remove('open');
                 drawer.setAttribute('aria-hidden', 'true');
-                drawer.setAttribute('inert', '');
                 document.body.style.overflow = '';
             }
 
@@ -472,10 +409,10 @@
             if (overlay) overlay.addEventListener('click', closeAdminDrawer);
 
             // Wire drawer buttons to same actions as header buttons
-            const tabOverviewDrawer = document.getElementById('tab-overview-drawer');
-            if (tabOverviewDrawer) tabOverviewDrawer.addEventListener('click', () => {
+            const addPropDrawer = document.getElementById('add-property-btn-drawer');
+            if (addPropDrawer) addPropDrawer.addEventListener('click', () => {
                 closeAdminDrawer();
-                document.getElementById('tab-overview')?.click();
+                document.getElementById('add-property-btn')?.click();
             });
             const tabPropsDrawer = document.getElementById('tab-properties-drawer');
             if (tabPropsDrawer) tabPropsDrawer.addEventListener('click', () => {

@@ -114,7 +114,7 @@ function renderPropertyTable(properties, onEdit, onDelete) {
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div class="flex space-x-2">
-                        <button class="edit-btn text-indigo-600 hover:text-indigo-900 transition-colors" data-property-id="${property.id}">
+                        <button class="edit-btn text-primary hover:text-primary-light font-semibold transition-colors" data-property-id="${property.id}">
                             Edit
                         </button>
                         <button class="delete-btn text-red-600 hover:text-red-900 transition-colors" data-property-id="${property.id}">

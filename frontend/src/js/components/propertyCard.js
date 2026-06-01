@@ -82,6 +82,8 @@ function renderPropertyCard(property) {
                 src="${imageUrl}" 
                 alt="${property.title || 'Property'}"
                 class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                loading="lazy"
+                decoding="async"
                 onerror="this.src='https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&auto=format&fit=crop&q=60'"
             />
             <div class="absolute top-3 right-3">
