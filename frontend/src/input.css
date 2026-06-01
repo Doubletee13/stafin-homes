@@ -1,3 +1,376 @@
+/* Self-hosted Outfit variable font — eliminates external Google Fonts request */
+@font-face {
+  font-family: 'Outfit';
+  src: url('/src/fonts/Outfit-Variable.woff2') format('woff2-variations');
+  font-weight: 300 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Outfit', sans-serif;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply text-gray-800 antialiased;
+  }
+}
+
+@layer components {
+
+  /* News Ticker */
+  .ticker-wrap {
+    @apply overflow-hidden whitespace-nowrap;
+  }
+
+  .ticker-content {
+    display: inline-block;
+    @apply animate-ticker;
+  }
+
+  .ticker-content:hover {
+    animation-play-state: paused;
+  }
+
+  /* Hero Slideshow */
+  .hero-slide {
+    @apply absolute inset-0 opacity-0 transition-opacity duration-700 ease-in-out;
+  }
+
+  .hero-slide.active {
+    @apply opacity-100;
+  }
+
+  /* Testimonial Card */
+  .testimonial-card {
+    @apply absolute inset-0 opacity-0 transition-all duration-500 ease-in-out;
+    transform: translateX(30px);
+  }
+
+  .testimonial-card.active {
+    @apply opacity-100;
+    transform: translateX(0);
+  }
+
+  /* ── Side Drawer (mobile hamburger menu) ───────────────────── */
+  .side-drawer {
+    transform: translateX(-100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .side-drawer.open {
+    transform: translateX(0);
+  }
+
+  /* Overlay behind drawer */
+  .drawer-overlay {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+
+  .drawer-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* ── Desktop Browse Categories Dropdown ─────────────────────── */
+  .categories-dropdown {
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+  }
+
+  .categories-dropdown.open {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  /* Pagination CSS */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .pag-btn {
+    padding: 8px 14px;
+    border: 0.5px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    color: #374151;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .pag-btn:hover:not(:disabled) {
+    background: #f3f4f6;
+    color: #0a2540;
+    border-color: #0a2540;
+  }
+
+  .pag-btn.active {
+    background: #051224;
+    color: #fff;
+    border-color: #051224;
+  }
+
+  .pag-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .pag-ellipsis {
+    padding: 8px 4px;
+    color: #9ca3af;
+    font-size: 13px;
+  }
+
+  /* ── Modern Custom Select Dropdown ──────────────────────────── */
+  .custom-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 18px;
+    padding-right: 40px !important;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .custom-select:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(229, 169, 60, 0.2);
+    border-color: #E5A93C;
+  }
+
+  .custom-select:hover {
+    border-color: #E5A93C;
+  }
+
+  /* ── Loader Animation ─────────────────────────────────────────────── */
+  .page-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background-color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+  }
+
+  html.dark .page-loader {
+    background-color: #0d1117;
+  }
+
+  .loader-square {
+    width: 20px;
+    height: 20px;
+    background-color: #E5A93C;
+    border-radius: 4px;
+    animation: squareBounce 1.2s ease-in-out infinite;
+  }
+
+  .loader-square:nth-child(1) {
+    animation-delay: 0s;
+  }
+
+  .loader-square:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  .loader-square:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+
+  .loader-square:nth-child(4) {
+    animation-delay: 0.6s;
+  }
+
+  .page-loader.hidden-loader {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* ── Dark Mode ───────────────────────────────────────────────────── */
+html.dark {
+  background: #0d1117;
+}
+
+html.dark body {
+  @apply bg-gray-900 text-gray-100;
+}
+
+/* Page background */
+html.dark .bg-gray-50 {
+  background-color: #0d1117;
+}
+
+html.dark .bg-white {
+  background-color: #161b22 !important;
+  color: #e6edf3;
+}
+
+/* Navbar stays dark primary */
+html.dark nav.bg-primary {
+  background-color: #051224;
+}
+
+/* Cards */
+html.dark .bg-gray-50.rounded-xl,
+html.dark .bg-white.rounded-xl,
+html.dark .bg-white.rounded-2xl,
+html.dark .bg-white.rounded-lg {
+  background-color: #1c2128 !important;
+  border-color: #30363d;
+}
+
+/* Text */
+html.dark .text-gray-600 {
+  color: #8b949e;
+}
+
+html.dark .text-gray-500 {
+  color: #8b949e;
+}
+
+html.dark .text-gray-700 {
+  color: #c9d1d9;
+}
+
+html.dark .text-gray-800 {
+  color: #e6edf3;
+}
+
+html.dark .text-gray-900 {
+  color: #f0f6fc;
+}
+
+html.dark .text-primary {
+  color: #58a6ff !important;
+}
+
+/* Buttons & News (Fix contrasting text) */
+html.dark .bg-accent {
+  color: #051224 !important;
+}
+
+html.dark nav.bg-primary .text-primary {
+  color: #051224 !important;
+}
+
+html.dark footer.bg-primary {
+  color: #c9d1d9;
+}
+
+html.dark footer.bg-primary .text-gray-400,
+html.dark footer.bg-primary .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+html.dark .news-ticker-text {
+  color: #c9d1d9 !important;
+}
+
+/* Section backgrounds */
+html.dark section.bg-white {
+  background-color: #161b22;
+}
+
+html.dark section.bg-gray-50 {
+  background-color: #0d1117;
+}
+
+/* Footer */
+html.dark footer.bg-primary {
+  background-color: #051224;
+}
+
+/* Inputs & borders */
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: #21262d;
+  border-color: #30363d;
+  color: #e6edf3;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #6e7681;
+}
+
+html.dark input:focus,
+html.dark textarea:focus,
+html.dark select:focus {
+  background-color: #21262d;
+  border-color: #E5A93C;
+}
+
+/* Table */
+html.dark table {
+  background-color: #161b22;
+}
+
+html.dark th {
+  background-color: #21262d;
+  color: #8b949e;
+}
+
+html.dark td {
+  border-color: #30363d;
+  color: #c9d1d9;
+}
+
+html.dark tr:hover td {
+  background-color: #1c2128;
+}
+
+/* Borders */
+html.dark .border-gray-200 {
+  border-color: #30363d;
+}
+
+html.dark .border-gray-300 {
+  border-color: #30363d;
+}
+
+html.dark .divide-gray-200>*+* {
+  border-color: #30363d;
+}
+
+/* Badges / pills */
+html.dark .bg-gray-100 {
+  background-color: #21262d;
+  color: #c9d1d9;
+}
+
+html.dark .text-gray-400 {
+  color: #6e7681;
+}
+
+/* Modal overlay */
+html.dark #form-modal .bg-white {
+  background-color: #161b22 !important;
+}
+
+/* Admin header search input in dark mode */
+html.dark .admin-search-input {
+  color: #e6edf3;
+}
