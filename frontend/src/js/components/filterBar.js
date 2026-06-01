@@ -11,6 +11,13 @@
  * @returns {HTMLElement} Filter bar DOM element
  */
 function renderFilterBar(currentFilters, onFilterChange) {
+    // Pre-populate keyword from URL query params (Fix 4)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlKeyword = urlParams.get('keyword') || '';
+    if (urlKeyword && !currentFilters.keyword) {
+        currentFilters = { ...currentFilters, keyword: urlKeyword };
+    }
+
     const container = document.createElement('div');
     container.className = 'bg-white rounded-lg shadow-md p-6 mb-8';
     container.setAttribute('role', 'search');
@@ -21,7 +28,7 @@ function renderFilterBar(currentFilters, onFilterChange) {
             <h2 class="text-lg font-semibold text-gray-900">Filter Properties</h2>
             <button 
                 type="button" 
-                class="clear-filters-btn text-sm text-blue-600 hover:text-blue-800 transition-colors focus:outline-none focus:underline"
+                class="clear-filters-btn text-sm text-primary hover:text-primary-light transition-colors focus:outline-none focus:underline"
                 aria-label="Clear all filters"
             >
                 Clear Filters
@@ -29,10 +36,10 @@ function renderFilterBar(currentFilters, onFilterChange) {
         </div>
         
         <form id="filter-form" class="space-y-4">
-            <!-- Row 1: Keyword + Sort -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Keyword Search -->
-                <div>
+            <!-- Row 1: Keyword full-width on desktop; on mobile: Filters toggle + Sort By side-by-side -->
+            <div class="flex flex-col gap-4">
+                <!-- Keyword Search (full width on desktop, full width on mobile above the row) -->
+                <div class="w-full">
                     <label for="filter-keyword" class="block text-sm font-medium text-gray-700 mb-1">
                         Search
                     </label>
@@ -42,136 +49,98 @@ function renderFilterBar(currentFilters, onFilterChange) {
                         name="keyword"
                         value="${currentFilters.keyword || ''}"
                         placeholder="e.g. pool, furnished, penthouse..."
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                         aria-describedby="keyword-help"
                     />
-                    <p id="keyword-help" class="mt-1 text-xs text-gray-500">Search by title or description</p>
                 </div>
 
-                <!-- Sort -->
-                <div>
-                    <label for="filter-sort" class="block text-sm font-medium text-gray-700 mb-1">
-                        Sort By
-                    </label>
-                    <select 
-                        id="filter-sort" 
-                        name="sort"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                        <option value="newest" ${(currentFilters.sort || 'newest') === 'newest' ? 'selected' : ''}>Newest Listings</option>
-                        <option value="oldest" ${currentFilters.sort === 'oldest' ? 'selected' : ''}>Oldest Listings</option>
-                        <option value="price_asc" ${currentFilters.sort === 'price_asc' ? 'selected' : ''}>Price: Low → High</option>
-                        <option value="price_desc" ${currentFilters.sort === 'price_desc' ? 'selected' : ''}>Price: High → Low</option>
-                    </select>
-                </div>
-            </div>
+                <!-- Mobile row: Filters toggle opposite Sort By -->
+                <div class="flex flex-row gap-3 items-end">
+                    <!-- Mobile Filter Toggle (hidden on desktop) -->
+                    <button type="button" id="mobile-filter-toggle" class="md:hidden flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md whitespace-nowrap flex-1 font-medium">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                        Filters
+                    </button>
 
-            <!-- Row 2: Location + Type -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Location Filter -->
-                <div>
-                    <label for="filter-location" class="block text-sm font-medium text-gray-700 mb-1">
-                        Location
-                    </label>
-                    <input 
-                        type="text" 
-                        id="filter-location" 
-                        name="location"
-                        value="${currentFilters.location || ''}"
-                        placeholder="e.g., Lagos, Abuja"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        aria-describedby="location-help"
-                    />
-                    <p id="location-help" class="mt-1 text-xs text-gray-500">Search by city or area</p>
-                </div>
-
-                <!-- Property Type Filter -->
-                <div>
-                    <label for="filter-property-type" class="block text-sm font-medium text-gray-700 mb-1">
-                        Property Type
-                    </label>
-                    <select 
-                        id="filter-property-type" 
-                        name="property_type"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                        <option value="">All Types</option>
-                        <option value="sale" ${currentFilters.property_type === 'sale' ? 'selected' : ''}>For Sale</option>
-                        <option value="rent" ${currentFilters.property_type === 'rent' ? 'selected' : ''}>For Rent</option>
-                        <option value="shortlet" ${currentFilters.property_type === 'shortlet' ? 'selected' : ''}>Short Let</option>
-                    </select>
-                </div>
-
-                <!-- Bedrooms Filter -->
-                <div>
-                    <label for="filter-bedrooms" class="block text-sm font-medium text-gray-700 mb-1">
-                        Bedrooms
-                    </label>
-                    <select 
-                        id="filter-bedrooms" 
-                        name="bedrooms"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                        <option value="">Any</option>
-                        <option value="1" ${currentFilters.bedrooms === 1 ? 'selected' : ''}>1+ Bedroom</option>
-                        <option value="2" ${currentFilters.bedrooms === 2 ? 'selected' : ''}>2+ Bedrooms</option>
-                        <option value="3" ${currentFilters.bedrooms === 3 ? 'selected' : ''}>3+ Bedrooms</option>
-                        <option value="4" ${currentFilters.bedrooms === 4 ? 'selected' : ''}>4+ Bedrooms</option>
-                        <option value="5" ${currentFilters.bedrooms === 5 ? 'selected' : ''}>5+ Bedrooms</option>
-                    </select>
+                    <!-- Sort By -->
+                    <div class="flex-1 md:w-48 md:flex-none">
+                        <label for="filter-sort" class="block text-sm font-medium text-gray-700 mb-1">
+                            Sort By
+                        </label>
+                        <select 
+                            id="filter-sort" 
+                            name="sort"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                        >
+                            <option value="newest" ${(currentFilters.sort || 'newest') === 'newest' ? 'selected' : ''}>Newest</option>
+                            <option value="oldest" ${currentFilters.sort === 'oldest' ? 'selected' : ''}>Oldest</option>
+                            <option value="price_asc" ${currentFilters.sort === 'price_asc' ? 'selected' : ''}>Price Low</option>
+                            <option value="price_desc" ${currentFilters.sort === 'price_desc' ? 'selected' : ''}>Price High</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
-            <!-- Row 3: Price + Bathrooms -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- Min Price Filter -->
-                <div>
-                    <label for="filter-min-price" class="block text-sm font-medium text-gray-700 mb-1">
-                        Min Price (₦)
-                    </label>
-                    <input 
-                        type="number" 
-                        id="filter-min-price" 
-                        name="min_price"
-                        value="${currentFilters.min_price || ''}"
-                        placeholder="Min"
-                        min="0"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
+            <!-- Advanced Filters Wrapper (Hidden by default on mobile) -->
+            <div id="advanced-filters" class="hidden md:block space-y-4 pt-4 border-t border-gray-100">
+                <!-- Row 2: Location + Type -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Location Filter -->
+                    <div>
+                        <label for="filter-location" class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                        <input type="text" id="filter-location" name="location" value="${currentFilters.location || ''}" placeholder="e.g., Lagos, Abuja" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
+                    </div>
+
+                    <!-- Property Type Filter -->
+                    <div>
+                        <label for="filter-property-type" class="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
+                        <select id="filter-property-type" name="property_type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">All Types</option>
+                            <option value="sale" ${currentFilters.property_type === 'sale' ? 'selected' : ''}>For Sale</option>
+                            <option value="rent" ${currentFilters.property_type === 'rent' ? 'selected' : ''}>For Rent</option>
+                            <option value="shortlet" ${currentFilters.property_type === 'shortlet' ? 'selected' : ''}>Short Let</option>
+                        </select>
+                    </div>
+
+                    <!-- Bedrooms Filter -->
+                    <div>
+                        <label for="filter-bedrooms" class="block text-sm font-medium text-gray-700 mb-1">Bedrooms</label>
+                        <select id="filter-bedrooms" name="bedrooms" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">Any</option>
+                            <option value="1" ${currentFilters.bedrooms === 1 ? 'selected' : ''}>1+ Bedroom</option>
+                            <option value="2" ${currentFilters.bedrooms === 2 ? 'selected' : ''}>2+ Bedrooms</option>
+                            <option value="3" ${currentFilters.bedrooms === 3 ? 'selected' : ''}>3+ Bedrooms</option>
+                            <option value="4" ${currentFilters.bedrooms === 4 ? 'selected' : ''}>4+ Bedrooms</option>
+                            <option value="5" ${currentFilters.bedrooms === 5 ? 'selected' : ''}>5+ Bedrooms</option>
+                        </select>
+                    </div>
                 </div>
 
-                <!-- Max Price Filter -->
-                <div>
-                    <label for="filter-max-price" class="block text-sm font-medium text-gray-700 mb-1">
-                        Max Price (₦)
-                    </label>
-                    <input 
-                        type="number" 
-                        id="filter-max-price" 
-                        name="max_price"
-                        value="${currentFilters.max_price || ''}"
-                        placeholder="Max"
-                        min="0"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                </div>
+                <!-- Row 3: Price + Bathrooms -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    <!-- Min Price Filter -->
+                    <div>
+                        <label for="filter-min-price" class="block text-sm font-medium text-gray-700 mb-1">Min Price (₦)</label>
+                        <input type="number" id="filter-min-price" name="min_price" value="${currentFilters.min_price || ''}" placeholder="Min" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
+                    </div>
 
-                <!-- Bathrooms Filter (NEW) -->
-                <div>
-                    <label for="filter-bathrooms" class="block text-sm font-medium text-gray-700 mb-1">
-                        Bathrooms
-                    </label>
-                    <select 
-                        id="filter-bathrooms" 
-                        name="bathrooms"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                        <option value="">Any</option>
-                        <option value="1" ${currentFilters.bathrooms === 1 ? 'selected' : ''}>1+ Bathroom</option>
-                        <option value="2" ${currentFilters.bathrooms === 2 ? 'selected' : ''}>2+ Bathrooms</option>
-                        <option value="3" ${currentFilters.bathrooms === 3 ? 'selected' : ''}>3+ Bathrooms</option>
-                        <option value="4" ${currentFilters.bathrooms === 4 ? 'selected' : ''}>4+ Bathrooms</option>
-                    </select>
+                    <!-- Max Price Filter -->
+                    <div>
+                        <label for="filter-max-price" class="block text-sm font-medium text-gray-700 mb-1">Max Price (₦)</label>
+                        <input type="number" id="filter-max-price" name="max_price" value="${currentFilters.max_price || ''}" placeholder="Max" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
+                    </div>
+
+                    <!-- Bathrooms Filter -->
+                    <div>
+                        <label for="filter-bathrooms" class="block text-sm font-medium text-gray-700 mb-1">Bathrooms</label>
+                        <select id="filter-bathrooms" name="bathrooms" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">Any</option>
+                            <option value="1" ${currentFilters.bathrooms === 1 ? 'selected' : ''}>1+ Bathroom</option>
+                            <option value="2" ${currentFilters.bathrooms === 2 ? 'selected' : ''}>2+ Bathrooms</option>
+                            <option value="3" ${currentFilters.bathrooms === 3 ? 'selected' : ''}>3+ Bathrooms</option>
+                            <option value="4" ${currentFilters.bathrooms === 4 ? 'selected' : ''}>4+ Bathrooms</option>
+                        </select>
+                    </div>
                 </div>
             </div>
         </form>
@@ -188,6 +157,16 @@ function renderFilterBar(currentFilters, onFilterChange) {
     const bathroomsSelect = container.querySelector('#filter-bathrooms');
     const clearFiltersBtn = container.querySelector('.clear-filters-btn');
     const filterForm = container.querySelector('#filter-form');
+
+    // UI Behaviors
+    const mobileFilterToggle = container.querySelector('#mobile-filter-toggle');
+    const advancedFilters = container.querySelector('#advanced-filters');
+
+    if (mobileFilterToggle) {
+        mobileFilterToggle.addEventListener('click', () => {
+            advancedFilters.classList.toggle('hidden');
+        });
+    }
 
     // --- Helper: collect all current filter values ---
     const getFilterValues = () => ({
@@ -238,6 +217,11 @@ function renderFilterBar(currentFilters, onFilterChange) {
 
     // Prevent native form submission
     filterForm.addEventListener('submit', (e) => e.preventDefault());
+
+    // If URL keyword was found, trigger an initial filter change
+    if (urlKeyword) {
+        setTimeout(() => notifyChange(), 0);
+    }
 
     return container;
 }

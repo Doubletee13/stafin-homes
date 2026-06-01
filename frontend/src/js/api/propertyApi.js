@@ -77,7 +77,7 @@ async function getProperties(filters = {}) {
     if (filters.keyword) url.searchParams.append('keyword', filters.keyword);
     if (filters.bathrooms) url.searchParams.append('bathrooms', filters.bathrooms);
     if (filters.sort) url.searchParams.append('sort', filters.sort);
-    if (filters.skip !== undefined) url.searchParams.append('skip', filters.skip);
+    if (filters.page !== undefined) url.searchParams.append('page', filters.page);
     if (filters.limit !== undefined) url.searchParams.append('limit', filters.limit);
 
     try {
@@ -97,19 +97,18 @@ async function getProperties(filters = {}) {
 
         const data = await response.json();
 
-        // Support paginated response shape { items, total, skip, limit }
-        // as well as legacy bare array format for backward compatibility
-        if (data && typeof data === 'object' && Array.isArray(data.items)) {
+        // Support new paginated response shape { data, pagination: { total, page, limit, totalPages } }
+        if (data && typeof data === 'object' && Array.isArray(data.data)) {
             return data; // Paginated response
         }
 
         if (Array.isArray(data)) {
             // Legacy bare array — wrap into paginated shape for consistency
-            return { items: data, total: data.length, skip: 0, limit: data.length };
+            return { data: data, pagination: { total: data.length, page: 1, limit: data.length, totalPages: 1 } };
         }
 
         console.warn('API returned unexpected data shape:', data);
-        return { items: [], total: 0, skip: 0, limit: 20 };
+        return { data: [], pagination: { total: 0, page: 1, limit: 9, totalPages: 0 } };
 
     } catch (error) {
         if (error.type) {
