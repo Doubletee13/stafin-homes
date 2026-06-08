@@ -5,7 +5,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://stafin-homes.onrender.com/api/$1"
+      "dest": "https://stafin-homes.onrender.com/$1"
     },
     {
       "src": "/(.*)",
