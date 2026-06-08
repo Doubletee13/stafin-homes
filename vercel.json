@@ -3,6 +3,10 @@
   "outputDirectory": "frontend/vercel_build",
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://stafin-homes.onrender.com/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/$1.html"
     }
