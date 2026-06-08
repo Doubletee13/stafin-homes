@@ -2,14 +2,14 @@
   "buildCommand": "npm install && npm run build",
   "outputDirectory": "vercel_build",
   "cleanUrls": true,
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/:path*",
-      "destination": "https://stafin-homes.onrender.com/:path*"
+      "src": "/api/(.*)",
+      "dest": "https://stafin-homes.onrender.com/api/$1"
     },
     {
-      "source": "/(.*)",
-      "destination": "/$1.html"
+      "src": "/(.*)",
+      "dest": "/$1.html"
     }
   ]
 }
