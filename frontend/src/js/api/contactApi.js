@@ -57,7 +57,7 @@ async function getInquiries(params = { skip: 0, limit: 100 }) {
         throw error;
     }
 
-    const url = new URL(`${CONTACT_API_BASE}/contacts/`);
+    const url = new URL(`${CONTACT_API_BASE}/contacts/`, window.location.origin);
     url.searchParams.append('skip', params.skip);
     url.searchParams.append('limit', params.limit);
 

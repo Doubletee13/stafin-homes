@@ -65,7 +65,7 @@ function throwIfAuthError(response) {
  * @throws {Error} Structured error with type property
  */
 async function getProperties(filters = {}) {
-    const url = new URL(`${API_BASE_URL}/properties/`);
+    const url = new URL(`${API_BASE_URL}/properties/`, window.location.origin);
 
     // Existing filters (preserved)
     if (filters.location) url.searchParams.append('location', filters.location);
