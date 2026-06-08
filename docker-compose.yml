@@ -47,6 +47,8 @@ services:
     container_name: stafin_frontend
     ports:
       - "3000:80"
+    environment:
+      - FRONTEND_API_BASE_URL=/api
     networks:
       - stafin_net
 

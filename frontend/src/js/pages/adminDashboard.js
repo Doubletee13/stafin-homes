@@ -130,16 +130,18 @@ class AdminDashboard {
         this.setState('loading');
 
         try {
-            const [propResponse, inqResponse] = await Promise.all([
-                getProperties({ limit: 100 }),
-                getInquiries({ skip: 0, limit: 100 })
-            ]);
-
+            const propResponse = await getProperties({ limit: 100 });
             const props = propResponse?.data ?? propResponse?.items ?? propResponse ?? [];
-            const inqs = inqResponse ?? [];
 
-            if (this.elements.statPropertiesCount) this.elements.statPropertiesCount.textContent = props.length;
-            if (this.elements.statInquiriesCount) this.elements.statInquiriesCount.textContent = inqs.length;
+            if (this.elements.statPropertiesCount) {
+                this.elements.statPropertiesCount.textContent = props.length;
+            }
+
+            // Inquiries loaded lazily when tab is clicked to avoid
+            // AUTH_ERROR on overview load causing immediate logout
+            if (this.elements.statInquiriesCount) {
+                this.elements.statInquiriesCount.textContent = '—';
+            }
 
             this.setState('success');
         } catch (error) {
@@ -168,6 +170,12 @@ class AdminDashboard {
         try {
             this.inquiries = await getInquiries({ skip: 0, limit: 100 });
             this.renderInquiries();
+
+            // Update stat count now that we have the real data
+            if (this.elements.statInquiriesCount) {
+                this.elements.statInquiriesCount.textContent = this.inquiries.length;
+            }
+
             this.setState('success');
         } catch (error) {
             console.error('Error loading inquiries:', error);

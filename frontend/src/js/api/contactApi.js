@@ -52,7 +52,9 @@ async function submitInquiry(contactData) {
 async function getInquiries(params = { skip: 0, limit: 100 }) {
     const token = localStorage.getItem('stafin_admin_token');
     if (!token) {
-        throw new Error('Not authenticated');
+        const error = new Error('Not authenticated');
+        error.type = 'AUTH_ERROR';
+        throw error;
     }
 
     const url = new URL(`${CONTACT_API_BASE}/contacts/`);
